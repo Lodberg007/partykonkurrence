@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ event.name }} — Resultater</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&display=swap');
+
+        :root {
+            --bg: #0b0b1a;
+            --card: #1a1a35;
+            --card-border: #2a2a50;
+            --gold: #d4a44c;
+            --gold-light: #f0c96c;
+            --gold-dim: #a07830;
+            --warm: #e8c080;
+            --text: #f0ead6;
+            --text-dim: #8a8498;
+            --green: #5cd85c;
+            --green-glow: rgba(92, 216, 92, 0.3);
+            --red: #e85858;
+            --blue: #6898e8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Stars */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(1px 1px at 90% 70%, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1.5px 1.5px at 25% 35%, rgba(212,164,76,0.5), transparent),
+                radial-gradient(1.5px 1.5px at 65% 85%, rgba(212,164,76,0.4), transparent);
+            animation: twinkle 4s ease-in-out infinite alternate;
+            pointer-events: none; z-index: 0;
+        }
+        @keyframes twinkle { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        .page-glow {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 500px; height: 250px;
+            background: radial-gradient(ellipse, rgba(212,164,76,0.12), transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+
+        /* Layout: full viewport */
+        .page-wrap {
+            position: relative; z-index: 1;
+            display: flex; flex-direction: column;
+            height: 100vh;
+            padding: 12px 20px;
+        }
+
+        /* Header — compact */
+        .header {
+            text-align: center;
+            padding: 8px 0 10px;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
+            color: var(--gold-light);
+            text-shadow: 0 0 20px rgba(212,164,76,0.3);
+        }
+
+        .header .status-line {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-badge.active { background: var(--green); color: #0b0b1a; }
+        .status-badge.setup { background: var(--gold); color: #0b0b1a; }
+        .status-badge.finished { background: var(--text-dim); color: #0b0b1a; }
+
+        /* Progress bar */
+        .progress-bar {
+            height: 4px;
+            background: var(--card-border);
+            border-radius: 2px;
+            margin: 8px 0 4px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold), var(--gold-light));
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        .progress-text {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        /* Competition grid — fills remaining space */
+        .comp-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+            overflow-y: auto;
+            min-height: 0;
+            padding-bottom: 8px;
+        }
+
+        .comp-grid::-webkit-scrollbar { width: 4px; }
+        .comp-grid::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 2px; }
+
+        .comp-col {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comp-header {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: var(--gold);
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(212,164,76,0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comp-header .progress {
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+
+        /* Match within comp column */
+        .match {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 6px;
+        }
+
+        .match.active {
+            border-color: var(--green);
+            box-shadow: 0 0 12px var(--green-glow);
+            background: rgba(92,216,92,0.05);
+        }
+
+        .match.waiting { opacity: 0.4; }
+        .match.played { opacity: 0.4; }
+
+        .match-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .match-label.now { color: var(--green); }
+        .match-label.next { color: var(--blue); }
+        .match-label.done { color: var(--text-dim); }
+
+        .match-resource {
+            font-size: 10px;
+            color: var(--gold-dim);
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 2px;
+        }
+
+        .match-teams {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .match-teams .team { flex: 1; text-align: center; font-weight: 600; font-size: 14px; }
+        .match-teams .vs { color: var(--text-dim); font-size: 11px; font-weight: 700; }
+
+        .score-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .score-box {
+            width: 52px; height: 44px;
+            background: var(--bg); border: 2px solid var(--card-border);
+            border-radius: 8px; color: var(--text);
+            font-size: 20px; font-weight: 700; text-align: center;
+            outline: none; -moz-appearance: textfield;
+        }
+        .score-box::-webkit-outer-spin-button,
+        .score-box::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .score-box:focus { border-color: var(--gold); box-shadow: 0 0 8px rgba(212,164,76,0.3); }
+
+        .score-sep { font-size: 16px; color: var(--text-dim); font-weight: 700; }
+
+        .score-display {
+            font-size: 18px; font-weight: 700; color: var(--warm);
+            text-align: center;
+        }
+
+        .btn-row {
+            display: flex; gap: 6px; margin-top: 6px;
+        }
+
+        .btn {
+            flex: 1; padding: 7px 12px; border: none; border-radius: 6px;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            color: #0b0b1a;
+        }
+        .btn-gold:hover { filter: brightness(1.1); }
+        .btn-ghost {
+            background: transparent; color: var(--text-dim);
+            border: 1px solid var(--card-border); flex: 0; white-space: nowrap;
+        }
+        .btn-ghost:hover { border-color: var(--text-dim); }
+        .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+        /* Points */
+        .points-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .points-row:last-child { border-bottom: none; }
+        .points-row .team-name { flex: 1; font-weight: 600; font-size: 13px; }
+        .points-input {
+            width: 52px; height: 34px;
+            background: var(--bg); border: 2px solid var(--card-border);
+            border-radius: 6px; color: var(--text);
+            font-size: 16px; font-weight: 700; text-align: center;
+            outline: none; -moz-appearance: textfield;
+        }
+        .points-input::-webkit-outer-spin-button,
+        .points-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .points-input:focus { border-color: var(--gold); }
+
+        /* Activity feed */
+        .feed-bar {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 12px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 12px;
+            overflow: hidden;
+        }
+        .feed-label {
+            color: var(--gold);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .feed-text {
+            color: var(--text-dim);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .feed-text strong { color: var(--text); }
+
+        .all-done {
+            text-align: center; padding: 8px;
+            color: var(--gold-light);
+            font-family: 'Playfair Display', serif;
+            font-size: 15px;
+        }
+
+        .empty {
+            text-align: center; color: var(--text-dim);
+            padding: 30px 16px; font-size: 14px;
+        }
+
+        /* Confetti */
+        .confetti { position: fixed; pointer-events: none; z-index: 9999; }
+        .confetti-piece {
+            position: absolute;
+            width: 8px; height: 8px;
+            border-radius: 1px;
+            animation: confetti-fall 1.5s ease forwards;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(400px) rotate(720deg); opacity: 0; }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            font-size: 13px; font-weight: 700; padding: 8px 20px;
+            border-radius: 8px; z-index: 9998;
+            animation: toast-anim 2.5s ease forwards;
+            pointer-events: none;
+        }
+        .toast.success { background: var(--green); color: #0b0b1a; }
+        .toast.error { background: var(--red); color: #fff; }
+        @keyframes toast-anim {
+            0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Back link */
+        .back-link {
+            position: absolute; top: 10px; left: 16px;
+            color: var(--text-dim); text-decoration: none;
+            font-size: 12px; z-index: 2;
+        }
+        .back-link:hover { color: var(--gold); }
+
+        /* Branding */
+        .branding {
+            flex-shrink: 0;
+            text-align: center;
+            font-size: 11px;
+            color: rgba(138,132,152,0.5);
+            padding: 4px 0;
+        }
+
+        /* Rules + QR section */
+        .rules-qr-bar {
+            flex-shrink: 0;
+            display: flex;
+            gap: 12px;
+            padding: 8px 0;
+            overflow-x: auto;
+        }
+        .rule-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 12px;
+            min-width: 260px;
+            max-width: 350px;
+            flex-shrink: 0;
+        }
+        .rule-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .rule-card-text {
+            font-size: 11px;
+            color: var(--text);
+            white-space: pre-line;
+            line-height: 1.4;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .rule-card-text::-webkit-scrollbar { width: 3px; }
+        .rule-card-text::-webkit-scrollbar-thumb { background: var(--card-border); }
+        .rule-qr-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .rule-qr-row canvas { border-radius: 4px; }
+        .rule-qr-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            line-height: 1.3;
+        }
+    </style>
+</head>
+<body>
+<div class="page-glow"></div>
+<a href="/event/{{ event.id }}" class="back-link">&larr; Admin</a>
+<div class="page-wrap">
+    <div class="header">
+        <h1>{{ event.name }}</h1>
+        <div class="status-line" id="subtitle"></div>
+    </div>
+
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-text" id="progress-text"></div>
+
+    <div class="comp-grid" id="comp-grid">
+        <div class="empty">Indlæser...</div>
+    </div>
+
+    <!-- Regler med QR-koder til holdenes telefoner -->
+    <div class="rules-qr-bar" id="rules-qr-bar" style="display:none;"></div>
+
+    <div class="feed-bar" id="feed-bar" style="display:none;">
+        <span class="feed-label">Seneste</span>
+        <span class="feed-text" id="feed-text"></span>
+    </div>
+
+    <div class="branding">Hosted by Lejpartytelt.dk</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+<script>
+const EVENT_ID = "{{ event.id }}";
+const BASE_URL = window.location.origin;
+let prevLeader = null;
+let rulesRendered = false;
+
+function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+function teamName(teams, teamId) {
+    const t = teams.find(x => x.id === teamId);
+    return t ? t.name : teamId;
+}
+
+function showToast(msg, isError) {
+    const t = document.createElement('div');
+    t.className = 'toast ' + (isError ? 'error' : 'success');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+}
+
+function spawnConfetti() {
+    const container = document.createElement('div');
+    container.className = 'confetti';
+    container.style.left = Math.random() * 80 + 10 + '%';
+    container.style.top = '20%';
+    const colors = ['#f0c96c', '#5cd85c', '#6898e8', '#e85858', '#f0ead6', '#d4a44c'];
+    for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'confetti-piece';
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        p.style.left = (Math.random() * 80 - 40) + 'px';
+        p.style.animationDelay = (Math.random() * 0.3) + 's';
+        p.style.animationDuration = (1 + Math.random()) + 's';
+        container.appendChild(p);
+    }
+    document.body.appendChild(container);
+    setTimeout(() => container.remove(), 2500);
+}
+
+function render(evt, standings) {
+    const el = document.getElementById('comp-grid');
+    const statusLabels = { setup: 'Opsætning', active: 'I gang', finished: 'Afsluttet' };
+    document.getElementById('subtitle').innerHTML =
+        `<span class="status-badge ${evt.status}">${statusLabels[evt.status]}</span>` +
+        `<span style="margin-left:8px;">${evt.teams.length} hold &middot; ${evt.competitions.length} konkurrencer</span>`;
+
+    if (evt.status === 'setup') {
+        el.innerHTML = '<div class="empty">Eventet er ikke startet endnu</div>';
+        return;
+    }
+
+    // Overall progress
+    let totalMatches = 0, playedMatches = 0;
+    for (const comp of evt.competitions) {
+        if (comp.type === 'round-robin') {
+            totalMatches += comp.matches.length;
+            playedMatches += comp.matches.filter(m => m.status === 'played').length;
+        }
+    }
+    const pct = totalMatches > 0 ? Math.round(playedMatches / totalMatches * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent =
+        totalMatches > 0 ? `${playedMatches} af ${totalMatches} kampe spillet (${pct}%)` : '';
+
+    // Leader change detection
+    if (standings && standings.length > 0) {
+        const newLeader = standings[0].team_id;
+        if (prevLeader && prevLeader !== newLeader) {
+            showToast(`Ny førerposition: ${teamName(evt.teams, newLeader)}!`, false);
+            spawnConfetti();
+        }
+        prevLeader = newLeader;
+    }
+
+    // Activity feed — last 3 results
+    const allPlayed = [];
+    for (const comp of evt.competitions) {
+        if (comp.type !== 'round-robin') continue;
+        const played = comp.matches.filter(m => m.status === 'played');
+        for (const m of played) {
+            allPlayed.push({ comp: comp.name, m });
+        }
+    }
+    const feedBar = document.getElementById('feed-bar');
+    if (allPlayed.length > 0) {
+        const last = allPlayed[allPlayed.length - 1];
+        const aName = teamName(evt.teams, last.m.team_a_id);
+        const bName = teamName(evt.teams, last.m.team_b_id);
+        document.getElementById('feed-text').innerHTML =
+            `<strong>${escapeHtml(aName)}</strong> ${last.m.score_a}&ndash;${last.m.score_b} <strong>${escapeHtml(bName)}</strong> (${escapeHtml(last.comp)})`;
+        feedBar.style.display = 'flex';
+    } else {
+        feedBar.style.display = 'none';
+    }
+
+    // Render competitions as grid columns
+    let html = '';
+
+    for (const comp of evt.competitions) {
+        if (comp.type !== 'round-robin') continue;
+        const active = comp.matches.filter(m => m.status === 'active');
+        const waiting = comp.matches.filter(m => m.status === 'waiting').sort((a, b) => a.queue_pos - b.queue_pos);
+        const played = comp.matches.filter(m => m.status === 'played');
+        const total = comp.matches.length;
+
+        html += `<div class="comp-col">
+            <div class="comp-header">${escapeHtml(comp.name)}
+                <span class="progress">${played.length}/${total}</span>
+            </div>`;
+
+        for (const m of active) {
+            const label = m.resource_label || '';
+            html += `<div class="match active">
+                <div class="match-label now">Spilles nu</div>
+                ${label ? `<div class="match-resource">${escapeHtml(label)}</div>` : ''}
+                <div class="match-teams">
+                    <div class="team">${escapeHtml(teamName(evt.teams, m.team_a_id))}</div>
+                    <div class="vs">VS</div>
+                    <div class="team">${escapeHtml(teamName(evt.teams, m.team_b_id))}</div>
+                </div>
+                <div class="score-row">
+                    <input type="number" min="0" class="score-box" id="ra-${m.id}" placeholder="0">
+                    <span class="score-sep">&mdash;</span>
+                    <input type="number" min="0" class="score-box" id="rb-${m.id}" placeholder="0">
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-gold" onclick="saveResult('${comp.id}','${m.id}')">Gem</button>
+                    <button class="btn btn-ghost btn-sm" onclick="postpone('${comp.id}','${m.id}')">Udskyd</button>
+                </div>
+            </div>`;
+        }
+
+        if (waiting.length > 0) {
+            const m = waiting[0];
+            const label = m.resource_label || '';
+            html += `<div class="match waiting">
+                <div class="match-label next">Næste</div>
+                ${label ? `<div class="match-resource">${escapeHtml(label)}</div>` : ''}
+                <div class="match-teams">
+                    <div class="team">${escapeHtml(teamName(evt.teams, m.team_a_id))}</div>
+                    <div class="vs">VS</div>
+                    <div class="team">${escapeHtml(teamName(evt.teams, m.team_b_id))}</div>
+                </div>
+            </div>`;
+        }
+
+        if (played.length > 0) {
+            const m = played[played.length - 1];
+            html += `<div class="match played">
+                <div class="match-label done">Sidst</div>
+                <div class="match-teams">
+                    <div class="team">${escapeHtml(teamName(evt.teams, m.team_a_id))}</div>
+                    <div class="score-display">${m.score_a}&ndash;${m.score_b}</div>
+                    <div class="team">${escapeHtml(teamName(evt.teams, m.team_b_id))}</div>
+                </div>
+            </div>`;
+        }
+
+        if (played.length === total && total > 0) {
+            html += `<div class="all-done">Alle kampe spillet!</div>`;
+        }
+
+        html += '</div>';
+    }
+
+    // Points
+    for (const comp of evt.competitions) {
+        if (comp.type !== 'points') continue;
+        html += `<div class="comp-col">
+            <div class="comp-header">${escapeHtml(comp.name)}</div>`;
+        for (const team of evt.teams) {
+            const pts = comp.results[team.id] || 0;
+            html += `<div class="points-row">
+                <span class="team-name">${escapeHtml(team.name)}</span>
+                <input type="number" min="0" class="points-input" id="pts-${comp.id}-${team.id}" value="${pts}">
+                <button class="btn btn-gold btn-sm" onclick="savePoints('${comp.id}','${team.id}')">Gem</button>
+            </div>`;
+        }
+        html += '</div>';
+    }
+
+    // Ranking competitions — vælg vinder
+    for (const comp of evt.competitions) {
+        if (comp.type !== 'ranking') continue;
+        const winnerId = Object.entries(comp.results || {}).find(([k,v]) => v === 1)?.[0];
+        const winnerName = winnerId ? teamName(evt.teams, winnerId) : null;
+        const isDecided = !!winnerId;
+        html += `<div class="comp-col"${isDecided ? ' style="opacity:0.6;"' : ''}>
+            <div class="comp-header">${escapeHtml(comp.name)}
+                <span class="progress" style="color:var(--gold);">Vælg vinder — 3p</span>
+            </div>`;
+        if (isDecided) {
+            html += `<div style="text-align:center;padding:16px;">
+                <div style="font-size:28px;margin-bottom:4px;">🏆</div>
+                <div style="font-size:18px;font-weight:700;color:var(--gold-light);">${escapeHtml(winnerName)}</div>
+                <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">Vinder — 3 point</div>
+                <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="resetRanking('${comp.id}')">Ændr vinder</button>
+            </div>`;
+        } else {
+            html += `<div style="text-align:center;padding:8px 0 4px;font-size:12px;color:var(--text-dim);">Tryk på vinderholdet:</div>`;
+            for (const team of evt.teams) {
+                html += `<div class="points-row" style="cursor:pointer;border-radius:8px;padding:10px;transition:background 0.15s;"
+                    onclick="saveWinner('${comp.id}','${team.id}')"
+                    onmouseover="this.style.background='rgba(92,216,92,0.1)';this.style.borderColor='var(--green)'"
+                    onmouseout="this.style.background='';this.style.borderColor=''">
+                    <span class="team-name" style="font-size:15px;">${escapeHtml(teamName(evt.teams, team.id))}</span>
+                    <span style="font-size:18px;">👑</span>
+                </div>`;
+            }
+        }
+        html += '</div>';
+    }
+
+    // Tiebreak matches
+    if (evt.tiebreak_matches && evt.tiebreak_matches.length > 0) {
+        html += `<div class="comp-col" style="border-color: var(--gold-dim);">
+            <div class="comp-header" style="border-color: rgba(212,164,76,0.3);">
+                Tiebreak / Finale
+            </div>`;
+
+        for (const m of evt.tiebreak_matches) {
+            const aName = teamName(evt.teams, m.team_a_id);
+            const bName = teamName(evt.teams, m.team_b_id);
+            if (m.status === 'played') {
+                html += `<div class="match played" style="opacity:0.6;">
+                    <div class="match-label done">${escapeHtml(m.label)} ✓</div>
+                    <div class="match-teams">
+                        <div class="team">${escapeHtml(aName)}</div>
+                        <div class="score-display">${m.score_a}&ndash;${m.score_b}</div>
+                        <div class="team">${escapeHtml(bName)}</div>
+                    </div>
+                </div>`;
+            } else {
+                html += `<div class="match active" style="border-color:var(--gold);box-shadow:0 0 12px rgba(212,164,76,0.3);background:rgba(212,164,76,0.05);">
+                    <div class="match-label now" style="color:var(--gold);">${escapeHtml(m.label)}</div>
+                    <div class="match-teams">
+                        <div class="team">${escapeHtml(aName)}</div>
+                        <div class="vs">VS</div>
+                        <div class="team">${escapeHtml(bName)}</div>
+                    </div>
+                    <div class="score-row">
+                        <input type="number" min="0" class="score-box" id="tb-ra-${m.id}" placeholder="0" style="border-color:var(--gold-dim);">
+                        <span class="score-sep">&mdash;</span>
+                        <input type="number" min="0" class="score-box" id="tb-rb-${m.id}" placeholder="0" style="border-color:var(--gold-dim);">
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn btn-gold" onclick="saveTiebreakResult('${m.id}')">Gem</button>
+                    </div>
+                    <div style="font-size:10px;color:var(--gold-dim);text-align:center;margin-top:4px;">Uafgjort ikke tilladt</div>
+                </div>`;
+            }
+        }
+        html += '</div>';
+    }
+
+    // Winner display
+    if (evt.winners && evt.winners.length > 0) {
+        const medals = ['🏆', '🥈', '🥉'];
+        html += `<div class="comp-col" style="border-color:var(--gold-dim);text-align:center;">
+            <div class="comp-header" style="justify-content:center;border-color:rgba(212,164,76,0.3);">Vindere</div>`;
+        for (const w of evt.winners) {
+            const style = w.place === 1
+                ? 'font-size:24px;font-weight:700;color:var(--gold-light);padding:12px 0;'
+                : w.place === 2
+                    ? 'font-size:18px;font-weight:600;color:var(--text-dim);padding:8px 0;'
+                    : 'font-size:16px;font-weight:500;color:var(--text-dim);padding:6px 0;';
+            html += `<div style="${style}">${medals[w.place - 1] || ''} ${w.place}. plads: ${escapeHtml(w.team_name)}</div>`;
+        }
+        html += '</div>';
+    }
+
+    el.innerHTML = html || '<div class="empty">Ingen konkurrencer</div>';
+
+    // Render regler + QR-koder (kun én gang)
+    if (!rulesRendered) {
+        renderRulesQR(evt);
+        rulesRendered = true;
+    }
+}
+
+function renderRulesQR(evt) {
+    const bar = document.getElementById('rules-qr-bar');
+    const compsWithRules = evt.competitions.filter(c => c.rules && c.rules.trim());
+    if (compsWithRules.length === 0 && evt.teams.length === 0) {
+        bar.style.display = 'none';
+        return;
+    }
+    bar.style.display = 'flex';
+    let html = '';
+
+    // Regler per konkurrence
+    for (const comp of compsWithRules) {
+        html += `<div class="rule-card">
+            <div class="rule-card-title">📋 ${escapeHtml(comp.name)}</div>
+            <div class="rule-card-text">${escapeHtml(comp.rules)}</div>
+        </div>`;
+    }
+
+    // QR-koder til holdenes sider
+    if (evt.teams.length > 0) {
+        html += `<div class="rule-card" style="min-width:200px;">
+            <div class="rule-card-title">📱 Hold QR-koder</div>
+            <div id="qr-codes-container" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;"></div>
+        </div>`;
+    }
+
+    bar.innerHTML = html;
+
+    // Generer QR-koder
+    if (evt.teams.length > 0 && typeof QRCode !== 'undefined') {
+        const container = document.getElementById('qr-codes-container');
+        for (const team of evt.teams) {
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'text-align:center;';
+            const canvas = document.createElement('canvas');
+            const label = document.createElement('div');
+            label.style.cssText = 'font-size:9px;color:var(--text-dim);margin-top:2px;';
+            label.textContent = team.name;
+            wrap.appendChild(canvas);
+            wrap.appendChild(label);
+            container.appendChild(wrap);
+            const url = `${BASE_URL}/event/${EVENT_ID}/hold/${team.code}`;
+            QRCode.toCanvas(canvas, url, { width: 80, margin: 1, color: { dark: '#f0ead6', light: '#1a1a35' } });
+        }
+    }
+}
+
+async function saveResult(compId, matchId) {
+    const sa = parseInt(document.getElementById(`ra-${matchId}`).value);
+    const sb = parseInt(document.getElementById(`rb-${matchId}`).value);
+    if (isNaN(sa) || isNaN(sb) || sa < 0 || sb < 0) { showToast('Indtast begge scorer', true); return; }
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/result`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comp_id: compId, match_id: matchId, score_a: sa, score_b: sb })
+        });
+        const data = await res.json();
+        if (data.success) { spawnConfetti(); showToast('Resultat gemt!'); if (document.activeElement) document.activeElement.blur(); poll(); }
+        else showToast(data.error, true);
+    } catch (e) { showToast('Netvaerksfejl', true); }
+}
+
+async function saveWinner(compId, teamId) {
+    // Sæt vinderen som 1. plads, resten som 2. (kun 1. plads får point)
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/ranking`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comp_id: compId, rankings: { [teamId]: 1 } })
+        });
+        const data = await res.json();
+        if (data.success) { spawnConfetti(); showToast('Vinder registreret!'); poll(); }
+        else showToast(data.error, true);
+    } catch (e) { showToast('Netvaerksfejl', true); }
+}
+
+async function resetRanking(compId) {
+    // Nulstil ranking — send tom
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/ranking`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comp_id: compId, rankings: {} })
+        });
+        const data = await res.json();
+        if (data.success) { showToast('Vinder nulstillet'); poll(); }
+        else showToast(data.error, true);
+    } catch (e) { showToast('Netvaerksfejl', true); }
+}
+
+async function postpone(compId, matchId) {
+    if (!confirm('Udskyd denne kamp?')) return;
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/postpone`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comp_id: compId, match_id: matchId })
+        });
+        const data = await res.json();
+        if (data.success) { showToast('Kamp udskudt'); poll(); }
+        else showToast(data.error, true);
+    } catch (e) { showToast('Netvaerksfejl', true); }
+}
+
+async function saveTiebreakResult(matchId) {
+    const sa = parseInt(document.getElementById(`tb-ra-${matchId}`).value);
+    const sb = parseInt(document.getElementById(`tb-rb-${matchId}`).value);
+    if (isNaN(sa) || isNaN(sb) || sa < 0 || sb < 0) { showToast('Indtast begge scorer', true); return; }
+    if (sa === sb) { showToast('Uafgjort ikke tilladt i tiebreak!', true); return; }
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/tiebreak-result`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ match_id: matchId, score_a: sa, score_b: sb })
+        });
+        const data = await res.json();
+        if (data.success) {
+            spawnConfetti(); spawnConfetti();
+            if (data.phase === 'finished') showToast('Vindere fundet!');
+            else showToast('Tiebreak-resultat gemt!');
+            poll();
+        } else showToast(data.error, true);
+    } catch (e) { showToast('Netvaerksfejl', true); }
+}
+
+async function savePoints(compId, teamId) {
+    const pts = parseInt(document.getElementById(`pts-${compId}-${teamId}`).value);
+    if (isNaN(pts) || pts < 0) { showToast('Ugyldigt pointtal', true); return; }
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/points`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comp_id: compId, team_id: teamId, points: pts })
+        });
+        const data = await res.json();
+        if (data.success) { showToast('Point gemt!'); poll(); }
+        else showToast(data.error, true);
+    } catch (e) { showToast('Netvaerksfejl', true); }
+}
+
+async function poll() {
+    // Skip re-render if user is typing in an input
+    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) {
+        return;
+    }
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/standings`);
+        const data = await res.json();
+        if (data.success) render(data.event, data.standings);
+    } catch (e) {}
+}
+
+poll();
+setInterval(poll, 5000);
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR-koder — {{ event.name }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>body { background: var(--base); color: var(--text); }</style>
+</head>
+<body>
+<div style="padding: 24px;">
+    <div class="no-print" style="text-align: center; margin-bottom: 24px;">
+        <h1 style="margin: 0;">{{ event.name }}</h1>
+        <p style="color: var(--subtext); margin: 4px 0 16px;">QR-koder til holdene — scan for at indskrive resultater</p>
+        <button class="btn btn-primary" onclick="window.print()">Print QR-koder</button>
+        <a href="/event/{{ event.id }}" class="btn btn-secondary" style="margin-left: 8px;">Tilbage</a>
+    </div>
+
+    <div class="qr-grid" id="qr-grid">
+        {% for team in event.teams %}
+        <div class="qr-card">
+            <canvas id="qr-{{ team.code }}"></canvas>
+            <h3>{{ team.name }}</h3>
+            {% if team.players %}
+            <p style="color: #444;">{{ team.players | join(', ') }}</p>
+            {% endif %}
+            <p>{{ event.name }}</p>
+            <p style="font-size: 10px; margin-top: 4px; color: #999;">{{ base_url }}/event/{{ event.id }}/hold/{{ team.code }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not event.teams %}
+    <p style="text-align: center; color: var(--subtext);">Ingen hold tilføjet endnu</p>
+    {% endif %}
+</div>
+
+<script>
+(function() {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js';
+    script.onload = function() {
+        {% for team in event.teams %}
+        QRCode.toCanvas(document.getElementById('qr-{{ team.code }}'),
+            '{{ base_url }}/event/{{ event.id }}/hold/{{ team.code }}',
+            { width: 200, margin: 2, color: { dark: '#1e1e2e', light: '#ffffff' } }
+        );
+        {% endfor %}
+    };
+    script.onerror = function() {
+        document.getElementById('qr-grid').innerHTML = '<p style="color: var(--red); text-align: center;">Kunne ikke indlæse QR-bibliotek. Tjek internetforbindelsen.</p>';
+    };
+    document.head.appendChild(script);
+})();
+</script>
+</body>
+</html>

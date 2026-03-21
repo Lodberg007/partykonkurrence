@@ -1,0 +1,449 @@
+/* Partykonkurrence — Catppuccin Mocha Dark Theme */
+
+:root {
+    --base: #1e1e2e;
+    --mantle: #181825;
+    --surface0: #313244;
+    --surface1: #45475a;
+    --surface2: #585b70;
+    --text: #cdd6f4;
+    --subtext: #a6adc8;
+    --blue: #89b4fa;
+    --teal: #94e2d5;
+    --green: #a6e3a1;
+    --red: #f38ba8;
+    --peach: #fab387;
+    --yellow: #f9e2af;
+    --overlay: #6c7086;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: var(--base);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+a { color: var(--blue); text-decoration: none; }
+a:hover { color: var(--teal); }
+
+/* ==================== LAYOUT ==================== */
+
+.app-container {
+    min-height: 100vh;
+}
+
+.app-header {
+    background: var(--mantle);
+    border-bottom: 1px solid var(--surface0);
+    padding: 12px 24px;
+}
+
+.app-header .logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.app-main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.page-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: var(--subtext);
+    margin-bottom: 12px;
+}
+
+.muted { color: var(--subtext); }
+
+/* ==================== SECTION ==================== */
+
+.section {
+    background: var(--surface0);
+    border: 1px solid var(--surface1);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.section h3 {
+    margin: 0 0 12px;
+    font-size: 16px;
+}
+
+/* ==================== BUTTONS ==================== */
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+    color: var(--base);
+}
+
+.btn-primary { background: var(--blue); }
+.btn-primary:hover { background: var(--teal); }
+.btn-secondary { background: var(--surface1); color: var(--text); }
+.btn-secondary:hover { background: var(--surface2); }
+.btn-success { background: var(--green); }
+.btn-success:hover { opacity: 0.9; }
+.btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+.btn-danger:hover { background: var(--red); color: var(--base); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* ==================== FORMS ==================== */
+
+.form-input {
+    background: var(--surface0);
+    color: var(--text);
+    border: 1px solid var(--surface1);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.form-input:focus { border-color: var(--blue); }
+
+textarea.form-input { font-family: inherit; }
+
+/* ==================== CARDS ==================== */
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.event-card {
+    background: var(--surface0);
+    border: 1px solid var(--surface1);
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+    color: var(--text);
+    display: block;
+}
+
+.event-card:hover {
+    border-color: var(--blue);
+    background: var(--surface1);
+}
+
+.card-title { font-weight: 600; font-size: 15px; }
+.card-meta { font-size: 12px; color: var(--subtext); margin-top: 4px; }
+
+/* ==================== STATUS ==================== */
+
+.event-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.event-status.setup { background: var(--yellow); color: var(--base); }
+.event-status.active { background: var(--green); color: var(--base); }
+.event-status.finished { background: var(--overlay); color: var(--text); }
+
+/* ==================== STANDINGS TABLE ==================== */
+
+.standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.standings-table th {
+    background: var(--surface1);
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--surface2);
+}
+
+.standings-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--surface0);
+}
+
+.standings-table tr:nth-child(even) { background: var(--mantle); }
+.standings-table tr:hover { background: var(--surface0); }
+
+.standings-table .rank-1 td:first-child { color: var(--yellow); font-weight: 700; }
+.standings-table .rank-2 td:first-child { color: var(--subtext); font-weight: 700; }
+.standings-table .rank-3 td:first-child { color: var(--peach); font-weight: 700; }
+
+/* ==================== MATCHES ==================== */
+
+.match-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--surface0);
+    border: 1px solid var(--surface1);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    transition: all 0.15s;
+}
+
+.match-row.played { opacity: 0.7; }
+
+.match-team { flex: 1; font-weight: 500; text-align: center; }
+.match-vs { color: var(--overlay); font-size: 12px; font-weight: 600; }
+
+.match-score { display: flex; align-items: center; gap: 6px; }
+
+.score-input {
+    width: 50px;
+    background: var(--mantle);
+    color: var(--text);
+    border: 1px solid var(--surface1);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 14px;
+    text-align: center;
+    -moz-appearance: textfield;
+    outline: none;
+}
+
+.score-input::-webkit-outer-spin-button,
+.score-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.score-input:focus { border-color: var(--blue); }
+
+.round-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue);
+    margin: 16px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--surface1);
+}
+
+.comp-section {
+    background: var(--surface0);
+    border: 1px solid var(--surface1);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.comp-section h3 { margin: 0 0 12px; font-size: 16px; }
+
+/* ==================== TEAM CHIPS ==================== */
+
+.team-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface1);
+    border: 1px solid var(--surface2);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+    margin: 3px;
+}
+
+.team-chip .remove-btn {
+    background: none;
+    border: none;
+    color: var(--red);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 2px;
+    line-height: 1;
+}
+
+/* ==================== STORSKÆRM ==================== */
+
+.screen-mode {
+    background: var(--base);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px;
+}
+
+.screen-header { text-align: center; margin-bottom: 32px; }
+.screen-header h1 { font-size: 48px; margin: 0; }
+.screen-header .screen-subtitle { font-size: 18px; color: var(--subtext); margin-top: 4px; }
+
+.screen-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.screen-panel {
+    background: var(--mantle);
+    border: 1px solid var(--surface0);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.screen-panel h2 { font-size: 24px; margin: 0 0 16px; color: var(--blue); }
+
+.screen-standings { width: 100%; border-collapse: collapse; font-size: 20px; }
+.screen-standings th { background: var(--surface0); padding: 12px 16px; text-align: left; font-weight: 600; color: var(--subtext); border-bottom: 2px solid var(--surface1); }
+.screen-standings td { padding: 12px 16px; border-bottom: 1px solid var(--surface0); }
+.screen-standings tr:nth-child(even) { background: rgba(49, 50, 68, 0.4); }
+.screen-standings .rank-1 { color: var(--yellow); font-weight: 700; }
+.screen-standings .rank-2 { color: var(--subtext); font-weight: 700; }
+.screen-standings .rank-3 { color: var(--peach); font-weight: 700; }
+
+.screen-match {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px;
+    background: var(--surface0);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 20px;
+}
+
+.screen-match.played { opacity: 0.6; }
+.screen-match .team-name { flex: 1; text-align: center; font-weight: 500; }
+.screen-match .score { font-size: 28px; font-weight: 700; color: var(--green); min-width: 40px; text-align: center; }
+.screen-match .score.pending { color: var(--overlay); font-size: 18px; }
+
+.screen-branding { text-align: center; margin-top: 32px; color: var(--overlay); font-size: 14px; }
+
+/* ==================== QR PRINT ==================== */
+
+.qr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 24px;
+    padding: 24px;
+}
+
+.qr-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    color: #1e1e2e;
+    page-break-inside: avoid;
+}
+
+.qr-card h3 { margin: 12px 0 4px; font-size: 20px; }
+.qr-card p { margin: 0; font-size: 12px; color: #666; }
+.qr-card canvas, .qr-card img { display: block; margin: 0 auto; }
+
+@media print {
+    .qr-grid { padding: 0; }
+    .qr-card { border: 1px solid #ccc; }
+    .no-print { display: none !important; }
+}
+
+/* ==================== HOLDSIDE (MOBIL) ==================== */
+
+.hold-page { max-width: 600px; margin: 0 auto; padding: 16px; }
+
+.hold-header { text-align: center; margin-bottom: 24px; }
+.hold-header h1 { font-size: 24px; margin: 0; }
+.hold-header .event-name { font-size: 14px; color: var(--subtext); }
+
+.hold-match {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: var(--surface0);
+    border: 1px solid var(--surface1);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.hold-match .opponent { flex: 1; font-weight: 500; }
+
+.hold-match .score-inputs { display: flex; align-items: center; gap: 4px; }
+
+.hold-match .score-inputs input {
+    width: 44px;
+    padding: 8px;
+    font-size: 16px;
+    text-align: center;
+    background: var(--mantle);
+    color: var(--text);
+    border: 1px solid var(--surface1);
+    border-radius: 4px;
+    outline: none;
+}
+
+.hold-match .score-inputs input:focus { border-color: var(--blue); }
+.hold-match .score-sep { color: var(--overlay); font-weight: 600; }
+
+/* ==================== TOAST ==================== */
+
+.toast-msg {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--base);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: 8px;
+    z-index: 9999;
+    animation: toast-fade 2.5s ease forwards;
+    pointer-events: none;
+}
+
+@keyframes toast-fade {
+    0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ==================== SPROGVÆLGER ==================== */
+
+.lang-switcher {
+    display: inline-flex;
+    gap: 0;
+    border: 1px solid var(--surface1);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.lang-btn {
+    background: transparent;
+    color: var(--subtext);
+    border: none;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.lang-btn:hover { color: var(--text); background: var(--surface0); }
+.lang-btn.active { background: var(--blue); color: var(--base); }

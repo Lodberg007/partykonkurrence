@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{{ event.name }} — Partykonkurrence{% endblock %}
+
+{% block body %}
+<div id="event-admin">
+    <h1 class="page-title">{{ event.name }}</h1>
+    <div id="event-status" style="margin-bottom: 20px;"></div>
+
+    <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+        {% if event.status == 'setup' %}
+        <button class="btn btn-success" onclick="window._startEvent()">Start event</button>
+        {% endif %}
+        {% if event.status == 'active' %}
+        <button class="btn btn-primary" onclick="window._openScreen()">Vis på storskærm</button>
+        <a href="/event/{{ event.id }}/resultat" target="_blank" class="btn btn-success">Indskriv resultater</a>
+        <a href="/event/{{ event.id }}/qr" target="_blank" class="btn btn-secondary">QR-koder</a>
+        <button class="btn btn-danger" onclick="window._finishEvent()">Afslut event</button>
+        {% endif %}
+        {% if event.status == 'finished' %}
+        <button class="btn btn-primary" onclick="window._openScreen()">Vis på storskærm</button>
+        <button class="btn btn-secondary" onclick="window._resetEvent()">Nulstil event</button>
+        {% endif %}
+        <button class="btn btn-danger" onclick="window._deleteEvent()" style="margin-left: auto;">Slet event</button>
+    </div>
+
+    <!-- Hold -->
+    <div class="section">
+        <h3>Hold</h3>
+        <div id="teams-container"></div>
+
+        {% if event.status == 'setup' %}
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--surface1);">
+            <h4 style="margin: 0 0 8px; font-size: 14px; color: var(--subtext);">Eller: Generer hold fra deltagerliste</h4>
+            <textarea id="participants-input" class="form-input" rows="4"
+                placeholder="Skriv deltagernavne — ét per linje"
+                style="width: 100%; resize: vertical; margin-bottom: 8px;"></textarea>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <label style="font-size: 13px; color: var(--subtext);">Antal hold:</label>
+                <input type="number" id="num-teams-input" class="score-input" min="2" value="2" style="width: 60px;">
+                <button class="btn btn-primary btn-sm" onclick="window._generateTeams()">Generer hold</button>
+                <span style="font-size: 12px; color: var(--overlay);" id="participant-count"></span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if event.status != 'setup' %}
+    <!-- Storskærm-besked -->
+    <div class="section">
+        <h3>Storskærm-besked</h3>
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="screen-message-input" class="form-input" placeholder="Fx: Aftensmad, Pause, Velkommen..." style="flex: 1;">
+            <button class="btn btn-primary btn-sm" onclick="window._sendScreenMessage()">Vis</button>
+            <button class="btn btn-secondary btn-sm" onclick="window._clearScreenMessage()">Fjern</button>
+        </div>
+        <div id="screen-message-status" style="font-size: 12px; color: var(--subtext); margin-top: 4px;"></div>
+    </div>
+    {% endif %}
+
+    <!-- Festlig mode -->
+    <div class="section">
+        <h3>Storskærm-effekter</h3>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+            <input type="checkbox" id="festive-toggle" {% if event.get('festive_mode', true) %}checked{% endif %} style="width:18px;height:18px;" onchange="window._toggleFestive(this.checked)">
+            <span>Festlige effekter (balloner, raketter, konfetti, bannere)</span>
+        </label>
+    </div>
+
+    <!-- Indstillinger -->
+    <div class="section" id="settings-section">
+        <h3>Finale-indstillinger</h3>
+        <div id="settings-container"></div>
+    </div>
+
+    <!-- Konkurrencer -->
+    <div class="section">
+        <h3>Konkurrencer</h3>
+        <div id="competitions-container"></div>
+    </div>
+
+    {% if event.status != 'setup' %}
+    <div class="section" id="winner-section">
+        <div id="winner-container"></div>
+    </div>
+
+    <div class="section">
+        <h3>Samlet stilling</h3>
+        <div id="standings-container"></div>
+    </div>
+
+    <div class="section">
+        <h3>Kampe &amp; Resultater</h3>
+        <div id="matches-container"></div>
+    </div>
+    {% else %}
+    <div id="winner-container" style="display:none;"></div>
+    <div id="standings-container" style="display:none;"></div>
+    <div id="matches-container" style="display:none;"></div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>document.body.dataset.eventId = "{{ event.id }}";</script>
+<script src="/static/js/event.js"></script>
+{% endblock %}

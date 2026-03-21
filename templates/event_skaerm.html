@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ event.name }} — Storskærm</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { margin: 0; overflow: hidden; height: 100vh; }
+
+        @keyframes pulse-border {
+            0%, 100% { border-color: var(--green); }
+            50% { border-color: rgba(166,227,161,0.3); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(166, 227, 161, 0.15); }
+            50% { box-shadow: 0 0 30px rgba(166, 227, 161, 0.4); }
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .screen-mode { height: 100vh; display: flex; flex-direction: column; }
+
+        .screen-header { text-align: center; padding: 10px 0 4px; flex-shrink: 0; }
+        .screen-header h1 { font-size: 34px; margin: 0; }
+        .screen-header .screen-subtitle { font-size: 13px; color: var(--subtext); margin-top: 1px; }
+
+        /* ==================== ROW 1: Flow — Forrige → Nu → Næste ==================== */
+        .flow-row {
+            flex-shrink: 0;
+            display: flex;
+            align-items: stretch;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 6px 32px 8px;
+        }
+
+        .flow-panel {
+            flex: 1;
+            background: var(--mantle);
+            border: 1px solid var(--surface0);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .flow-panel h2 {
+            font-size: 14px;
+            margin: 0 0 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .flow-panel.prev { opacity: 0.45; flex: 0.8; }
+        .flow-panel.prev h2 { color: var(--subtext); }
+
+        .flow-panel.current {
+            border: 2px solid var(--green);
+            animation: pulse-glow 2.5s infinite;
+            flex: 1.4;
+        }
+        .flow-panel.current h2 { color: var(--green); font-size: 16px; }
+
+        .flow-panel.next { opacity: 0.75; }
+        .flow-panel.next h2 { color: var(--blue); }
+
+        /* Arrow connectors */
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            flex-shrink: 0;
+        }
+
+        .flow-match {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 10px;
+            background: var(--surface0);
+            border-radius: 8px;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        .flow-match .comp-tag {
+            font-size: 13px; font-weight: 700; color: var(--peach);
+            min-width: 60px; text-transform: uppercase;
+        }
+        .flow-match .resource-tag {
+            font-size: 9px; font-weight: 600; color: var(--green); min-width: 40px;
+        }
+        .flow-match .team { flex: 1; text-align: center; font-weight: 600; }
+        .flow-match .vs { color: var(--overlay); font-size: 11px; flex-shrink: 0; }
+        .flow-match .score {
+            font-weight: 700; font-size: 15px; color: var(--green);
+            min-width: 50px; text-align: center; flex-shrink: 0;
+        }
+        .flow-match.active-match {
+            border: 2px solid var(--green);
+            animation: pulse-border 2s infinite;
+        }
+        .flow-match.ranking { border: 1px solid var(--peach); background: rgba(250,179,135,0.05); }
+        .flow-match.ranking .comp-tag { color: var(--peach); }
+        .flow-match.ranking .winner-tag {
+            font-size: 11px; font-weight: 700; color: var(--green);
+            background: rgba(166,227,161,0.15); padding: 2px 8px;
+            border-radius: 4px; white-space: nowrap;
+        }
+        .flow-match.ranking .all-teams {
+            flex: 1; text-align: center; font-weight: 500; font-size: 13px;
+            color: var(--subtext);
+        }
+        .flow-match.tiebreak { border: 2px solid var(--yellow); background: rgba(249,226,175,0.05); }
+        .flow-match.tiebreak .comp-tag { color: var(--yellow); }
+        .flow-match.tiebreak.active-match {
+            border: 3px solid var(--yellow);
+            box-shadow: 0 0 30px rgba(249,226,175,0.4);
+            animation: pulse-border-gold 2s infinite;
+        }
+        @keyframes pulse-border-gold {
+            0%, 100% { border-color: var(--yellow); box-shadow: 0 0 30px rgba(249,226,175,0.4); }
+            50% { border-color: rgba(249,226,175,0.5); box-shadow: 0 0 50px rgba(249,226,175,0.6); }
+        }
+
+        /* Finale banner */
+        .finale-banner {
+            text-align: center;
+            padding: 6px 0;
+            font-size: 22px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--yellow);
+            text-shadow: 0 0 20px rgba(249,226,175,0.5);
+            animation: finale-pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes finale-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.03); }
+        }
+        .finale-banner .finale-emoji {
+            font-size: 28px;
+            animation: finale-emoji-bounce 0.8s ease-in-out infinite alternate;
+        }
+        @keyframes finale-emoji-bounce {
+            0% { display: inline-block; transform: translateY(0); }
+            100% { display: inline-block; transform: translateY(-4px); }
+        }
+
+        .flow-empty { color: var(--overlay); font-size: 12px; text-align: center; padding: 10px; }
+
+        /* ==================== ROW 2: Top 3 + Stilling ==================== */
+        .row2 {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 32px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .panel {
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--mantle);
+            border: 1px solid var(--surface0);
+            border-radius: 12px;
+            padding: 12px 16px;
+        }
+        .panel h2 {
+            flex-shrink: 0;
+            font-size: 18px;
+            margin: 0 0 8px;
+        }
+
+        .scroll-container {
+            overflow: hidden;
+            position: relative;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .scroll-toggle {
+            display: inline-flex; gap: 4px; margin-left: 12px; vertical-align: middle;
+        }
+        .scroll-toggle button {
+            background: var(--surface0); color: var(--subtext);
+            border: 1px solid var(--surface1); border-radius: 4px;
+            padding: 2px 8px; font-size: 11px; cursor: pointer;
+            opacity: 0.5; transition: opacity 0.2s;
+        }
+        .scroll-toggle button:hover { opacity: 0.8; }
+        .scroll-toggle button.active { background: var(--blue); color: var(--base); border-color: var(--blue); opacity: 1; }
+
+        /* Top 3 */
+        .top3-h2 { color: var(--yellow); }
+        .top3-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 12px; background: var(--surface0);
+            border-radius: 8px; margin-bottom: 5px;
+        }
+        .top3-rank { font-size: 24px; font-weight: 900; min-width: 32px; text-align: center; }
+        .top3-rank.r1 { color: var(--yellow); }
+        .top3-rank.r2 { color: var(--subtext); }
+        .top3-rank.r3 { color: var(--peach); }
+        .top3-name { flex: 1; font-size: 16px; font-weight: 600; }
+        .top3-points { font-size: 20px; font-weight: 700; color: var(--green); }
+        .top3-empty { text-align: center; color: var(--overlay); padding: 16px; font-size: 13px; }
+
+        .top3-winner {
+            border: 2px solid var(--yellow);
+            background: linear-gradient(135deg, var(--surface0), rgba(249, 226, 175, 0.1));
+        }
+        .top3-winner-label {
+            font-size: 10px; color: var(--yellow); font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        @keyframes winner-glow {
+            0%, 100% { box-shadow: 0 0 8px rgba(249, 226, 175, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(249, 226, 175, 0.6); }
+        }
+        .top3-winner.r1 { animation: winner-glow 2s infinite; }
+
+        /* Stilling panel */
+        .standings-h2 { color: var(--blue); }
+
+        /* ==================== PROGRESS BAR ==================== */
+        .progress-strip {
+            flex-shrink: 0;
+            max-width: 1600px;
+            width: 100%;
+            margin: 6px auto 0;
+            padding: 0 32px;
+        }
+        .progress-outer {
+            height: 10px;
+            background: var(--surface0);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-inner {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), var(--teal, #94e2d5));
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        .progress-label {
+            text-align: center;
+            font-size: 11px;
+            color: var(--subtext);
+            margin-top: 2px;
+        }
+
+        /* Branding */
+        .screen-branding {
+            text-align: center;
+            padding: 3px 0;
+            color: var(--overlay);
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        /* Screen message overlay */
+        .screen-message-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999;
+        }
+        .screen-message-box {
+            text-align: center; padding: 60px 80px;
+            background: var(--mantle); border: 3px solid var(--yellow);
+            border-radius: 24px;
+            box-shadow: 0 0 60px rgba(249, 226, 175, 0.2);
+        }
+        .screen-message-text {
+            font-size: 72px; font-weight: 700; color: var(--yellow);
+            text-shadow: 0 0 30px rgba(249, 226, 175, 0.3);
+        }
+
+        /* ===== FESTIVE EFFECTS ===== */
+
+        /* Glowing orbs (upgraded particles) */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            border-radius: 50%;
+            opacity: 0;
+            z-index: 0;
+        }
+        @keyframes float-particle {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.4; }
+            100% { transform: translateY(-20px) scale(1); opacity: 0; }
+        }
+
+        /* Balloons */
+        .balloon {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            font-size: 30px;
+            bottom: -60px;
+            filter: drop-shadow(0 0 6px rgba(255,255,255,0.15));
+        }
+        @keyframes float-balloon {
+            0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+            5% { opacity: 0.85; }
+            25% { transform: translateY(-25vh) translateX(20px) rotate(5deg); }
+            50% { transform: translateY(-55vh) translateX(-15px) rotate(-3deg); }
+            75% { transform: translateY(-80vh) translateX(10px) rotate(4deg); }
+            95% { opacity: 0.6; }
+            100% { transform: translateY(-110vh) translateX(-5px) rotate(-2deg); opacity: 0; }
+        }
+
+        /* Rockets */
+        .rocket {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1;
+            font-size: 28px;
+            bottom: -40px;
+        }
+        @keyframes rocket-launch {
+            0% { transform: translateY(0) rotate(-45deg); opacity: 0; }
+            5% { opacity: 1; }
+            60% { transform: translateY(-65vh) rotate(-45deg); opacity: 1; }
+            80% { transform: translateY(-75vh) rotate(-45deg); opacity: 0.5; }
+            100% { transform: translateY(-85vh) rotate(-45deg); opacity: 0; }
+        }
+
+        /* Sparkle burst (from rocket explosion) */
+        .sparkle-burst {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1;
+            font-size: 16px;
+        }
+        @keyframes sparkle-explode {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            top: -20px;
+            width: 8px;
+            height: 14px;
+            border-radius: 2px;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) translateX(0) rotateZ(0deg) rotateY(0deg); opacity: 1; }
+            25% { transform: translateY(25vh) translateX(15px) rotateZ(90deg) rotateY(180deg); }
+            50% { transform: translateY(50vh) translateX(-10px) rotateZ(200deg) rotateY(360deg); }
+            75% { transform: translateY(75vh) translateX(20px) rotateZ(300deg) rotateY(540deg); opacity: 0.7; }
+            100% { transform: translateY(110vh) translateX(-5px) rotateZ(400deg) rotateY(720deg); opacity: 0; }
+        }
+
+        /* Sparkle twinkles */
+        .sparkle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            font-size: 18px;
+        }
+        @keyframes sparkle-twinkle {
+            0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(180deg); opacity: 0.9; }
+        }
+
+        /* ===== TOP 3 CHANGE BANNER ===== */
+        .top3-banner-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9998;
+            pointer-events: none;
+            animation: banner-fade 5s ease-in-out forwards;
+        }
+        @keyframes banner-fade {
+            0% { opacity: 0; }
+            8% { opacity: 1; }
+            75% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        .top3-banner {
+            text-align: center;
+            padding: 40px 70px;
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+            animation: banner-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes banner-pop {
+            0% { transform: scale(0.3) rotate(-5deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .top3-banner.rank-1 {
+            background: linear-gradient(135deg, #1a1a00, #3d3500, #1a1a00);
+            border: 3px solid #f9e2af;
+            box-shadow: 0 0 60px rgba(249, 226, 175, 0.4), 0 0 120px rgba(249, 226, 175, 0.15);
+        }
+        .top3-banner.rank-2 {
+            background: linear-gradient(135deg, #0d1a2a, #1a2d4a, #0d1a2a);
+            border: 3px solid #89b4fa;
+            box-shadow: 0 0 60px rgba(137, 180, 250, 0.4), 0 0 120px rgba(137, 180, 250, 0.15);
+        }
+        .top3-banner.rank-3 {
+            background: linear-gradient(135deg, #1a1000, #2d1d08, #1a1000);
+            border: 3px solid #fab387;
+            box-shadow: 0 0 60px rgba(250, 179, 135, 0.4), 0 0 120px rgba(250, 179, 135, 0.15);
+        }
+        .banner-emoji {
+            font-size: 52px;
+            margin-bottom: 8px;
+            animation: banner-emoji-bounce 0.8s ease-in-out infinite alternate;
+        }
+        @keyframes banner-emoji-bounce {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-8px) scale(1.1); }
+        }
+        .banner-team-name {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+        .banner-team-name.rank-1 { color: #f9e2af; text-shadow: 0 0 20px rgba(249,226,175,0.5); }
+        .banner-team-name.rank-2 { color: #89b4fa; text-shadow: 0 0 20px rgba(137,180,250,0.5); }
+        .banner-team-name.rank-3 { color: #fab387; text-shadow: 0 0 20px rgba(250,179,135,0.5); }
+        .banner-subtitle {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f0ead6;
+            margin-top: 4px;
+        }
+        .banner-fire {
+            font-size: 22px;
+            color: #f38ba8;
+            font-weight: 600;
+            margin-top: 8px;
+            animation: fire-pulse 0.5s ease-in-out infinite alternate;
+        }
+        @keyframes fire-pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.05); opacity: 1; }
+        }
+        .banner-confetti {
+            position: absolute;
+            font-size: 20px;
+            pointer-events: none;
+            animation: banner-confetti-fly 1.5s ease-out forwards;
+        }
+        @keyframes banner-confetti-fly {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+<!-- Festive floating particles -->
+<div id="particles"></div>
+
+<div class="screen-mode">
+    <div class="screen-header">
+        <h1 id="event-name">{{ event.name }}</h1>
+        <div class="screen-subtitle" id="event-subtitle">Indlæser...</div>
+    </div>
+
+    <!-- Row 1: Flow — Forrige → Spilles nu → Næste -->
+    <div class="flow-row">
+        <div class="flow-panel prev">
+            <h2>Forrige</h2>
+            <div id="flow-prev"><div class="flow-empty">Ingen endnu</div></div>
+        </div>
+
+        <div class="flow-arrow">
+            <svg viewBox="0 0 40 40" fill="none">
+                <path d="M6 20 L30 20" stroke="var(--surface2)" stroke-width="3" stroke-linecap="round"/>
+                <path d="M24 13 L32 20 L24 27" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+
+        <div class="flow-panel current">
+            <h2>Spilles nu</h2>
+            <div id="flow-current"><div class="flow-empty">Ingen aktive kampe</div></div>
+        </div>
+
+        <div class="flow-arrow">
+            <svg viewBox="0 0 40 40" fill="none">
+                <path d="M6 20 L30 20" stroke="var(--surface2)" stroke-width="3" stroke-linecap="round"/>
+                <path d="M24 13 L32 20 L24 27" stroke="var(--blue)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+
+        <div class="flow-panel next">
+            <h2>Næste — Gør klar til kamp!</h2>
+            <div id="flow-next"><div class="flow-empty">Ingen ventende</div></div>
+        </div>
+    </div>
+
+    <!-- Row 2: Top 3 (left) + Stilling (right) -->
+    <div class="row2">
+        <div class="panel">
+            <h2 class="top3-h2" id="top3-title">Top 3</h2>
+            <div id="top3-area"><div class="top3-empty">Indlæser...</div></div>
+        </div>
+        <div class="panel">
+            <h2 class="standings-h2">Stilling
+                <span class="scroll-toggle" id="toggle-standings">
+                    <button onclick="setColumnMode('standings','static')" data-mode="static">Statisk</button>
+                    <button onclick="setColumnMode('standings','bounce')" data-mode="bounce">Bounce</button>
+                    <button onclick="setColumnMode('standings','loop')" data-mode="loop">Loop</button>
+                </span>
+            </h2>
+            <div class="scroll-container" id="standings-scroll">
+                <div class="scroll-content" id="screen-standings"><p class="muted">Indlæser...</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-strip">
+        <div class="progress-outer">
+            <div class="progress-inner" id="progress-fill" style="width:0%"></div>
+        </div>
+        <div class="progress-label" id="progress-label"></div>
+    </div>
+
+    <div class="screen-branding">Partykonkurrence — Hosted by Lejpartytelt.dk</div>
+</div>
+
+<div class="screen-message-overlay" id="screen-message-overlay" style="display:none;">
+    <div class="screen-message-box">
+        <div class="screen-message-text" id="screen-message-text"></div>
+    </div>
+</div>
+
+<script>
+const EVENT_ID = "{{ event.id }}";
+
+function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+function teamDisplayName(teams, teamId) {
+    const t = teams.find(x => x.id === teamId);
+    if (!t) return teamId;
+    if (t.players && t.players.length > 0) return `${t.name}: ${t.players.join(' & ')}`;
+    return t.name;
+}
+
+// ==================== FESTIVE EFFECTS ====================
+
+function spawnFestiveEffects() {
+    const container = document.getElementById('particles');
+
+    // 1) Glowing orbs (upgraded particles — bigger, brighter, more)
+    const orbColors = [
+        'rgba(166,227,161,0.6)', 'rgba(137,180,250,0.6)',
+        'rgba(249,226,175,0.5)', 'rgba(245,194,231,0.5)',
+        'rgba(148,226,213,0.5)', 'rgba(250,179,135,0.5)',
+        'rgba(203,166,247,0.5)', 'rgba(243,139,168,0.4)',
+    ];
+    for (let i = 0; i < 25; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = 6 + Math.random() * 12;
+        const color = orbColors[Math.floor(Math.random() * orbColors.length)];
+        p.style.cssText = `
+            width:${size}px; height:${size}px;
+            left:${Math.random() * 100}%;
+            background:${color};
+            box-shadow: 0 0 ${size}px ${color};
+            animation: float-particle ${12 + Math.random() * 18}s linear infinite;
+            animation-delay: ${Math.random() * 12}s;
+        `;
+        container.appendChild(p);
+    }
+
+    // 2) Balloons
+    const balloonEmojis = ['🎈', '🎈', '🎈', '🎉', '🎊'];
+    for (let i = 0; i < 8; i++) {
+        const b = document.createElement('div');
+        b.className = 'balloon';
+        b.textContent = balloonEmojis[Math.floor(Math.random() * balloonEmojis.length)];
+        const size = 24 + Math.random() * 18;
+        b.style.cssText = `
+            left: ${5 + Math.random() * 90}%;
+            font-size: ${size}px;
+            animation: float-balloon ${22 + Math.random() * 16}s ease-in-out infinite;
+            animation-delay: ${Math.random() * 20}s;
+        `;
+        container.appendChild(b);
+    }
+
+    // 3) Confetti rain
+    const confettiColors = ['#a6e3a1', '#89b4fa', '#f9e2af', '#f5c2e7', '#fab387', '#94e2d5', '#cba6f7', '#f38ba8', '#eba0ac', '#74c7ec'];
+    for (let i = 0; i < 25; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        const w = 5 + Math.random() * 8;
+        const h = 8 + Math.random() * 10;
+        c.style.cssText = `
+            left: ${Math.random() * 100}%;
+            width: ${w}px; height: ${h}px;
+            background: ${confettiColors[Math.floor(Math.random() * confettiColors.length)]};
+            animation: confetti-fall ${8 + Math.random() * 12}s linear infinite;
+            animation-delay: ${Math.random() * 15}s;
+            opacity: 0;
+        `;
+        container.appendChild(c);
+    }
+
+    // 4) Sparkle twinkles
+    const sparkleChars = ['✨', '⭐', '💫', '🌟'];
+    for (let i = 0; i < 12; i++) {
+        const s = document.createElement('div');
+        s.className = 'sparkle';
+        s.textContent = sparkleChars[Math.floor(Math.random() * sparkleChars.length)];
+        s.style.cssText = `
+            left: ${Math.random() * 95}%;
+            top: ${Math.random() * 90}%;
+            font-size: ${12 + Math.random() * 14}px;
+            animation: sparkle-twinkle ${3 + Math.random() * 4}s ease-in-out infinite;
+            animation-delay: ${Math.random() * 6}s;
+        `;
+        container.appendChild(s);
+    }
+
+    // 5) Periodic rockets with sparkle bursts
+    function launchRocket() {
+        const r = document.createElement('div');
+        r.className = 'rocket';
+        r.textContent = '🚀';
+        const startX = 10 + Math.random() * 80;
+        r.style.cssText = `
+            left: ${startX}%;
+            font-size: ${26 + Math.random() * 10}px;
+            animation: rocket-launch 3s ease-out forwards;
+        `;
+        container.appendChild(r);
+
+        // Spawn sparkle burst after rocket reaches top
+        setTimeout(() => {
+            r.remove();
+            spawnBurst(startX);
+        }, 2400);
+    }
+
+    function spawnBurst(x) {
+        const burstEmojis = ['✨', '💥', '🌟', '⭐', '🎆'];
+        const angles = [0, 45, 90, 135, 180, 225, 270, 315];
+        for (let i = 0; i < 8; i++) {
+            const s = document.createElement('div');
+            s.className = 'sparkle-burst';
+            s.textContent = burstEmojis[Math.floor(Math.random() * burstEmojis.length)];
+            const angle = angles[i] * Math.PI / 180;
+            const dist = 40 + Math.random() * 60;
+            const dx = Math.cos(angle) * dist;
+            const dy = Math.sin(angle) * dist;
+            s.style.cssText = `
+                left: ${x}%;
+                top: 25%;
+                font-size: ${14 + Math.random() * 10}px;
+                animation: sparkle-explode 1.2s ease-out forwards;
+            `;
+            // Use CSS custom properties for direction
+            s.animate([
+                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                { transform: `translate(${dx}px, ${dy}px) scale(0.3)`, opacity: 0 }
+            ], { duration: 1200, easing: 'ease-out', fill: 'forwards' });
+            container.appendChild(s);
+            setTimeout(() => s.remove(), 1300);
+        }
+    }
+
+    // Launch first rocket after 3s, then every 8-15s
+    setTimeout(launchRocket, 3000);
+    setInterval(() => {
+        launchRocket();
+    }, 8000 + Math.random() * 7000);
+}
+spawnFestiveEffects();
+
+// ==================== FLOW ====================
+
+function renderFlow(evt) {
+    const prevEl = document.getElementById('flow-prev');
+    const currEl = document.getElementById('flow-current');
+    const nextEl = document.getElementById('flow-next');
+
+    let activeMatches = [];
+    let nextMatches = [];
+    let lastPlayed = [];
+    let rankingEntries = [];  // ranking competitions
+
+    for (const comp of evt.competitions) {
+        if (comp.type === 'round-robin') {
+            for (const m of comp.matches) {
+                const entry = { ...m, compName: comp.name };
+                if (m.status === 'active') activeMatches.push(entry);
+                else if (m.status === 'waiting') nextMatches.push(entry);
+                else if (m.status === 'played') lastPlayed.push(entry);
+            }
+        } else if (comp.type === 'ranking') {
+            const hasWinner = comp.results && Object.values(comp.results).includes(1);
+            const winnerId = hasWinner ? Object.entries(comp.results).find(([k,v]) => v === 1)?.[0] : null;
+            rankingEntries.push({
+                compName: comp.name,
+                compId: comp.id,
+                isRanking: true,
+                hasWinner: hasWinner,
+                winnerId: winnerId,
+                results: comp.results || {},
+            });
+        }
+    }
+
+    if (evt.tiebreak_matches) {
+        for (const m of evt.tiebreak_matches) {
+            const entry = { ...m, compName: m.label, isTiebreak: true };
+            if (m.status === 'active') activeMatches.push(entry);
+            else if (m.status === 'played') lastPlayed.push(entry);
+        }
+    }
+
+    nextMatches.sort((a, b) => (a.queue_pos || 0) - (b.queue_pos || 0));
+    const recentPlayed = lastPlayed.slice(-4).reverse();
+
+    // Forrige
+    if (recentPlayed.length > 0) {
+        prevEl.innerHTML = recentPlayed.map(m => {
+            const aName = teamDisplayName(evt.teams, m.team_a_id);
+            const bName = teamDisplayName(evt.teams, m.team_b_id);
+            return `<div class="flow-match${m.isTiebreak ? ' tiebreak' : ''}">
+                <span class="comp-tag">${escapeHtml(m.compName)}</span>
+                <span class="team">${escapeHtml(aName)}</span>
+                <span class="score">${m.score_a} — ${m.score_b}</span>
+                <span class="team">${escapeHtml(bName)}</span>
+            </div>`;
+        }).join('');
+    } else {
+        prevEl.innerHTML = '<div class="flow-empty">Ingen endnu</div>';
+    }
+
+    // Spilles nu
+    const hasTiebreakActive = activeMatches.some(m => m.isTiebreak);
+    const activeRankings = rankingEntries.filter(r => !r.hasWinner);
+    const finishedRankings = rankingEntries.filter(r => r.hasWinner);
+    if (activeMatches.length > 0 || activeRankings.length > 0) {
+        let currHtml = '';
+        if (hasTiebreakActive) {
+            currHtml += `<div class="finale-banner"><span class="finale-emoji">🏆</span> FINALE <span class="finale-emoji">🏆</span></div>`;
+        }
+        currHtml += activeMatches.map(m => {
+            const aName = teamDisplayName(evt.teams, m.team_a_id);
+            const bName = teamDisplayName(evt.teams, m.team_b_id);
+            const label = m.resource_label || '';
+            return `<div class="flow-match active-match${m.isTiebreak ? ' tiebreak' : ''}">
+                <span class="comp-tag">${escapeHtml(m.compName)}</span>
+                ${label ? `<span class="resource-tag">${escapeHtml(label)}</span>` : ''}
+                <span class="team">${escapeHtml(aName)}</span>
+                <span class="vs">vs</span>
+                <span class="team">${escapeHtml(bName)}</span>
+            </div>`;
+        }).join('');
+        // Active ranking competitions (no winner yet)
+        currHtml += activeRankings.map(r => {
+            const teamNames = evt.teams.map(t => t.name).join(' · ');
+            return `<div class="flow-match ranking active-match">
+                <span class="comp-tag">${escapeHtml(r.compName)}</span>
+                <span class="all-teams">${escapeHtml(teamNames)}</span>
+                <span class="vs" style="color:var(--peach);">Afventer vinder</span>
+            </div>`;
+        }).join('');
+        currEl.innerHTML = currHtml;
+    } else {
+        currEl.innerHTML = '<div class="flow-empty">Ingen aktive kampe</div>';
+    }
+
+    // Add finished rankings to prev section
+    if (finishedRankings.length > 0) {
+        let rankHtml = finishedRankings.map(r => {
+            const winnerName = teamDisplayName(evt.teams, r.winnerId);
+            return `<div class="flow-match ranking">
+                <span class="comp-tag">${escapeHtml(r.compName)}</span>
+                <span class="team">🏆 ${escapeHtml(winnerName)}</span>
+                <span class="winner-tag">Vinder!</span>
+            </div>`;
+        }).join('');
+        if (prevEl.querySelector('.flow-empty')) {
+            prevEl.innerHTML = rankHtml;
+        } else {
+            prevEl.innerHTML = rankHtml + prevEl.innerHTML;
+        }
+    }
+
+    // Næste — kun første ventende kamp per konkurrence
+    const seenComps = new Set();
+    const nextPerComp = [];
+    for (const m of nextMatches) {
+        if (!seenComps.has(m.compName)) {
+            seenComps.add(m.compName);
+            nextPerComp.push(m);
+        }
+    }
+    if (nextPerComp.length > 0) {
+        nextEl.innerHTML = nextPerComp.map(m => {
+            const aName = teamDisplayName(evt.teams, m.team_a_id);
+            const bName = teamDisplayName(evt.teams, m.team_b_id);
+            const label = m.resource_label || '';
+            return `<div class="flow-match">
+                <span class="comp-tag">${escapeHtml(m.compName)}</span>
+                ${label ? `<span class="resource-tag" style="color:var(--blue);">${escapeHtml(label)}</span>` : ''}
+                <span class="team">${escapeHtml(aName)}</span>
+                <span class="vs">vs</span>
+                <span class="team">${escapeHtml(bName)}</span>
+            </div>`;
+        }).join('');
+    } else {
+        nextEl.innerHTML = '<div class="flow-empty">Ingen ventende</div>';
+    }
+}
+
+// ==================== TOP 3 ====================
+
+function renderTop3(standings, evt) {
+    const el = document.getElementById('top3-area');
+    const h2 = document.getElementById('top3-title');
+
+    if (evt.winners && evt.winners.length > 0) {
+        if (h2) h2.textContent = 'VINDERE';
+        const medals = ['🏆', '🥈', '🥉'];
+        el.innerHTML = evt.winners.map(w => {
+            const name = teamDisplayName(evt.teams, w.team_id);
+            return `<div class="top3-row top3-winner ${w.place === 1 ? 'r1' : ''}">
+                <span class="top3-rank r${w.place}">${medals[w.place - 1] || w.place + '.'}</span>
+                <span class="top3-name">${escapeHtml(name)}</span>
+                <span class="top3-winner-label">${w.place === 1 ? 'VINDER!' : w.place + '. plads'}</span>
+            </div>`;
+        }).join('');
+        return;
+    }
+
+    if (h2) h2.textContent = 'Top 3';
+    if (!standings || standings.length < 1) {
+        el.innerHTML = '<div class="top3-empty">Ingen resultater endnu</div>';
+        return;
+    }
+
+    el.innerHTML = standings.slice(0, 3).map((s, i) => {
+        const name = teamDisplayName(evt.teams, s.team_id);
+        return `<div class="top3-row">
+            <span class="top3-rank r${i + 1}">${i + 1}.</span>
+            <span class="top3-name">${escapeHtml(name)}</span>
+            <span class="top3-points">${s.total_points} p</span>
+        </div>`;
+    }).join('');
+}
+
+// ==================== PROGRESS ====================
+
+function renderProgress(evt) {
+    let total = 0, done = 0;
+    for (const comp of evt.competitions) {
+        if (comp.type === 'round-robin') {
+            total += comp.matches.length;
+            done += comp.matches.filter(m => m.status === 'played').length;
+        }
+    }
+    const pct = total > 0 ? Math.round(done / total * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-label').textContent =
+        total > 0 ? `${done} af ${total} kampe spillet (${pct}%)` : '';
+}
+
+// ==================== AUTO-SCROLL ====================
+
+const columnModes = {
+    standings: localStorage.getItem('skaerm_scroll_standings') || 'static',
+};
+const bounceState = {};
+const loopState = {};
+const LOOP_SPEED = 30;
+
+function setColumnMode(column, mode) {
+    columnModes[column] = mode;
+    localStorage.setItem('skaerm_scroll_' + column, mode);
+    const content = document.getElementById('screen-standings');
+    if (content) {
+        const orig = content.getAttribute('data-orig-html');
+        if (orig) { content.innerHTML = orig; content.removeAttribute('data-orig-html'); }
+        content.style.transition = '';
+        content.style.transform = 'translateY(0)';
+    }
+    delete bounceState[column];
+    delete loopState[column];
+    updateToggleButtons();
+}
+
+function updateToggleButtons() {
+    const toggle = document.getElementById('toggle-standings');
+    if (!toggle) return;
+    toggle.querySelectorAll('button').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-mode') === columnModes.standings);
+    });
+}
+updateToggleButtons();
+
+function tickBounce() {
+    if (columnModes.standings !== 'bounce') return;
+    const container = document.getElementById('standings-scroll');
+    const content = document.getElementById('screen-standings');
+    if (!container || !content) return;
+    content.style.transition = 'transform 0.8s ease-in-out';
+    const containerH = container.offsetHeight;
+    const contentH = content.scrollHeight;
+    if (contentH <= containerH) { content.style.transform = 'translateY(0)'; return; }
+    const overflow = contentH - containerH;
+    if (!bounceState.standings) bounceState.standings = { offset: 0, direction: 1 };
+    const s = bounceState.standings;
+    const step = containerH * 0.6;
+    s.offset += step * s.direction;
+    if (s.offset >= overflow) { s.offset = overflow; s.direction = -1; }
+    if (s.offset <= 0) { s.offset = 0; s.direction = 1; }
+    content.style.transform = `translateY(-${s.offset}px)`;
+}
+
+function ensureLoopDuplicated(newOrigHtml) {
+    const container = document.getElementById('standings-scroll');
+    const content = document.getElementById('screen-standings');
+    if (!container || !content) return;
+    const containerH = container.offsetHeight;
+    const orig = newOrigHtml || content.getAttribute('data-orig-html') || content.innerHTML;
+    const measure = document.createElement('div');
+    measure.style.cssText = 'position:absolute;visibility:hidden;width:' + container.offsetWidth + 'px;';
+    measure.innerHTML = orig;
+    container.appendChild(measure);
+    const origH = measure.scrollHeight;
+    container.removeChild(measure);
+    if (origH <= containerH) {
+        content.removeAttribute('data-orig-html');
+        content.innerHTML = orig;
+        content.style.transform = 'translateY(0)';
+        if (loopState.standings) loopState.standings.active = false;
+        return;
+    }
+    const prevOrig = content.getAttribute('data-orig-html');
+    if (prevOrig !== orig) {
+        content.setAttribute('data-orig-html', orig);
+        content.innerHTML = orig + '<div style="height:80px"></div>' + orig;
+    }
+    content.style.transition = '';
+    const oneBlockH = origH + 40;
+    if (!loopState.standings) loopState.standings = { offset: 0, active: true, blockH: oneBlockH };
+    loopState.standings.blockH = oneBlockH;
+    loopState.standings.active = true;
+}
+
+let lastLoopTime = 0;
+function loopAnimFrame(timestamp) {
+    if (!lastLoopTime) lastLoopTime = timestamp;
+    const delta = (timestamp - lastLoopTime) / 1000;
+    lastLoopTime = timestamp;
+    if (columnModes.standings === 'loop') {
+        const s = loopState.standings;
+        if (s && s.active) {
+            const content = document.getElementById('screen-standings');
+            if (content) {
+                s.offset += LOOP_SPEED * delta;
+                if (s.offset >= s.blockH) s.offset -= s.blockH;
+                content.style.transform = `translateY(-${s.offset}px)`;
+            }
+        }
+    }
+    requestAnimationFrame(loopAnimFrame);
+}
+requestAnimationFrame(loopAnimFrame);
+
+let lastStandingsHtml = '';
+
+// ==================== RENDER STANDINGS ====================
+
+function renderScreenStandings(standings, evt) {
+    const el = document.getElementById('screen-standings');
+    if (!standings || standings.length === 0) {
+        lastStandingsHtml = '<p class="muted">Ingen resultater endnu</p>';
+    } else {
+        let html = `<table class="screen-standings">
+            <thead><tr><th>#</th><th>Hold</th><th>K</th><th>V</th><th>U</th><th>T</th><th>+/-</th><th>P</th></tr></thead><tbody>`;
+        standings.forEach((s, i) => {
+            const rankClass = i < 3 ? `rank-${i + 1}` : '';
+            const displayName = teamDisplayName(evt.teams, s.team_id);
+            html += `<tr class="${rankClass}">
+                <td>${i + 1}</td><td>${escapeHtml(displayName)}</td>
+                <td>${s.played}</td><td>${s.won}</td><td>${s.drawn}</td><td>${s.lost}</td>
+                <td>${s.goal_diff > 0 ? '+' : ''}${s.goal_diff}</td>
+                <td style="font-weight:700;font-size:22px;">${s.total_points}</td>
+            </tr>`;
+        });
+        lastStandingsHtml = html + '</tbody></table>';
+    }
+    if (columnModes.standings !== 'loop') {
+        el.innerHTML = lastStandingsHtml;
+    }
+}
+
+// ==================== TOP 3 CHANGE DETECTION ====================
+
+let prevTop3Ids = [];  // track previous top 3 team IDs
+
+function checkTop3Changes(standings, evt) {
+    if (!standings || standings.length < 1) return;
+    // Don't show banners when winners are set (event is finished)
+    if (evt.winners && evt.winners.length > 0) return;
+
+    const currentTop3 = standings.slice(0, 3).map(s => s.team_id);
+
+    // Skip first load
+    if (prevTop3Ids.length === 0) {
+        prevTop3Ids = [...currentTop3];
+        return;
+    }
+
+    // Find teams that are new in top 3 or changed position
+    for (let i = 0; i < currentTop3.length; i++) {
+        const teamId = currentTop3[i];
+        const prevPos = prevTop3Ids.indexOf(teamId);
+
+        // Team was not in top 3 before, or moved up to a higher position
+        if (prevPos === -1 || prevPos > i) {
+            const place = i + 1;
+            const teamName = teamDisplayName(evt.teams, teamId);
+            showTop3Banner(teamName, place);
+            break;  // only show one banner at a time
+        }
+    }
+
+    prevTop3Ids = [...currentTop3];
+}
+
+function showTop3Banner(name, place) {
+    // Don't stack banners
+    const existing = document.querySelector('.top3-banner-overlay');
+    if (existing) existing.remove();
+
+    const rankEmojis = { 1: '🏆🔥', 2: '⭐🚀', 3: '💪🎯' };
+    const fireTexts = [
+        'is on fire! 🔥🔥🔥',
+        'går amok! 💥',
+        'er ustoppelige! 🚀',
+        'smadrer det! 💪',
+        'kører derudaf! ⚡',
+    ];
+    const fireText = fireTexts[Math.floor(Math.random() * fireTexts.length)];
+    const placeLabel = place === 1 ? '1. pladsen!' : place === 2 ? '2. pladsen!' : '3. pladsen!';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'top3-banner-overlay';
+
+    const banner = document.createElement('div');
+    banner.className = `top3-banner rank-${place}`;
+    banner.innerHTML = `
+        <div class="banner-emoji">${rankEmojis[place]}</div>
+        <div class="banner-team-name rank-${place}">${escapeHtml(name)}</div>
+        <div class="banner-fire">${fireText}</div>
+        <div class="banner-subtitle">De er nu på ${placeLabel}</div>
+    `;
+
+    overlay.appendChild(banner);
+    document.body.appendChild(overlay);
+
+    // Spawn mini confetti around banner
+    const confettiEmojis = ['🎉', '🎊', '✨', '🌟', '💫', '⭐', '🎈', '🎆'];
+    for (let i = 0; i < 12; i++) {
+        const c = document.createElement('div');
+        c.className = 'banner-confetti';
+        c.textContent = confettiEmojis[Math.floor(Math.random() * confettiEmojis.length)];
+        const angle = (i / 12) * Math.PI * 2;
+        const dist = 120 + Math.random() * 100;
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+        c.style.cssText = `
+            left: 50%; top: 50%;
+            font-size: ${16 + Math.random() * 12}px;
+        `;
+        c.animate([
+            { transform: 'translate(-50%, -50%) scale(0) rotate(0deg)', opacity: 1 },
+            { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.2) rotate(${180 + Math.random() * 360}deg)`, opacity: 0 }
+        ], { duration: 1500 + Math.random() * 500, easing: 'ease-out', fill: 'forwards', delay: 200 + Math.random() * 300 });
+        banner.appendChild(c);
+    }
+
+    // Remove after animation completes
+    setTimeout(() => overlay.remove(), 5200);
+}
+
+// ==================== POLL ====================
+
+async function poll() {
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/standings`);
+        const data = await res.json();
+        if (!data.success) return;
+        const evt = data.event;
+        const statusLabels = { setup: 'Opsætning', active: 'I gang', finished: 'Afsluttet' };
+        document.getElementById('event-subtitle').textContent = `${statusLabels[evt.status]} — ${evt.teams.length} hold`;
+
+        // Festive mode toggle
+        const festive = evt.festive_mode !== false;  // default true
+        const particlesEl = document.getElementById('particles');
+        if (particlesEl) particlesEl.style.display = festive ? '' : 'none';
+        // Remove any active banner if festive off
+        if (!festive) {
+            const banner = document.querySelector('.top3-banner-overlay');
+            if (banner) banner.remove();
+        }
+
+        if (festive) checkTop3Changes(data.standings, evt);
+        renderFlow(evt);
+        renderTop3(data.standings, evt);
+        renderScreenStandings(data.standings, evt);
+        renderProgress(evt);
+
+        if (columnModes.standings === 'loop') {
+            ensureLoopDuplicated(lastStandingsHtml);
+        }
+
+        // Screen message overlay
+        const overlay = document.getElementById('screen-message-overlay');
+        const msgText = document.getElementById('screen-message-text');
+        if (evt.screen_message) {
+            msgText.textContent = evt.screen_message;
+            overlay.style.display = 'flex';
+        } else {
+            overlay.style.display = 'none';
+        }
+    } catch (e) {}
+}
+
+poll();
+setInterval(poll, 5000);
+setInterval(tickBounce, 4000);
+</script>
+</body>
+</html>

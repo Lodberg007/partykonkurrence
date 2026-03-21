@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Partykonkurrence{% endblock %}
+
+{% block body %}
+<h1 class="page-title" data-i18n="events">Events</h1>
+<p class="page-subtitle" data-i18n="create_manage">Opret og styr konkurrencer til festlige begivenheder</p>
+
+<div class="section" style="margin-top: 20px;">
+    <h3 data-i18n="create_new_event">Opret nyt event</h3>
+    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+        <input type="text" id="new-event-name" class="form-input" data-i18n-placeholder="event_name_placeholder" placeholder="Eventnavn (fx Julecup 2026)..." style="flex: 1;">
+        <button class="btn btn-primary" onclick="opretEvent()" data-i18n="create">Opret</button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px; background: var(--surface0); border-radius: 8px;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px;">
+            <input type="checkbox" id="new-enable-finals" checked style="width:16px;height:16px;">
+            <span data-i18n="play_finals_on_tie">Spil finale ved pointlighed</span>
+        </label>
+        <div id="new-tiebreak-wrap" style="display:flex;align-items:center;gap:8px;margin-left:24px;">
+            <label style="font-size:12px;color:var(--subtext);" data-i18n="format">Format:</label>
+            <select id="new-tiebreak-mode" class="form-input" style="width:auto;font-size:12px;padding:4px 8px;">
+                <option value="always" data-i18n="tiebreak_always">Altid (top 2/3 spiller finale)</option>
+                <option value="all_comps" data-i18n="tiebreak_all_comps">Kun ved pointlighed — alle discipliner</option>
+                <option value="single" data-i18n="tiebreak_single">Kun ved pointlighed — én kamp</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="card-grid" style="margin-top: 20px;">
+    {% for evt in events %}
+    <a href="/event/{{ evt.id }}" class="event-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span class="event-status {{ evt.status }}" id="status-{{ evt.id }}">
+                {% if evt.status == 'setup' %}Opsætning
+                {% elif evt.status == 'active' %}I gang
+                {% else %}Afsluttet{% endif %}
+            </span>
+        </div>
+        <div class="card-title">{{ evt.name }}</div>
+        <div class="card-meta">{{ evt.teams | length }} <span data-i18n="teams_word">hold</span> — {{ evt.competitions | length }} <span data-i18n="competitions_word">konkurrencer</span></div>
+    </a>
+    {% endfor %}
+
+    {% if not events %}
+    <p class="muted" data-i18n="no_events">Ingen events oprettet endnu</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Oversæt status-badges dynamisk
+document.querySelectorAll('.event-status').forEach(el => {
+    const text = el.textContent.trim();
+    if (text === 'Opsætning' || text === 'Setup') el.textContent = t('status_setup');
+    else if (text === 'I gang' || text === 'Active') el.textContent = t('status_active');
+    else if (text === 'Afsluttet' || text === 'Finished') el.textContent = t('status_finished');
+});
+
+async function opretEvent() {
+    const input = document.getElementById('new-event-name');
+    const name = input.value.trim();
+    if (!name) { alert(t('write_event_name')); return; }
+    const enableFinals = document.getElementById('new-enable-finals').checked;
+    const tiebreakMode = document.getElementById('new-tiebreak-mode').value;
+    try {
+        const res = await fetch('/api/event/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, enable_finals: enableFinals, tiebreak_mode: tiebreakMode }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.href = `/event/${data.event.id}`;
+        } else {
+            alert(data.error);
+        }
+    } catch (e) { alert(t('create_error')); }
+}
+document.getElementById('new-enable-finals').addEventListener('change', function() {
+    document.getElementById('new-tiebreak-wrap').style.display = this.checked ? 'flex' : 'none';
+});
+document.getElementById('new-event-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') opretEvent();
+});
+</script>
+{% endblock %}

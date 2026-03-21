@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ team.name }} — {{ event.name }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+        :root {
+            --bg: #0b0b1a;
+            --card: #1a1a35;
+            --card-border: #2a2a50;
+            --gold: #d4a44c;
+            --gold-light: #f0c96c;
+            --text: #f0ead6;
+            --text-dim: #8a8498;
+            --green: #5cd85c;
+            --green-glow: rgba(92, 216, 92, 0.3);
+            --red: #e85858;
+            --blue: #6898e8;
+            --orange: #fab387;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, sans-serif;
+            min-height: 100vh;
+            padding: 0 0 80px;
+        }
+
+        /* Header */
+        .team-header {
+            text-align: center;
+            padding: 20px 16px 16px;
+            background: linear-gradient(180deg, rgba(26,26,53,0.95), var(--bg));
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .team-event-name { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        .team-name { font-size: 28px; font-weight: 800; margin: 4px 0; }
+        .team-players { font-size: 14px; color: var(--gold-light); margin-bottom: 8px; }
+        .team-rank-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 15px; font-weight: 700;
+        }
+        .team-rank-badge.r1 { background: rgba(249,226,175,0.15); color: var(--gold-light); border: 1px solid var(--gold); }
+        .team-rank-badge.r2 { background: rgba(137,180,250,0.15); color: var(--blue); border: 1px solid var(--blue); }
+        .team-rank-badge.r3 { background: rgba(250,179,135,0.15); color: var(--orange); border: 1px solid var(--orange); }
+        .team-rank-badge.other { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid var(--card-border); }
+
+        /* Progress bar */
+        .progress-section {
+            padding: 12px 16px;
+        }
+        .progress-outer {
+            height: 10px; background: var(--card); border-radius: 5px; overflow: hidden;
+        }
+        .progress-inner {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), #94e2d5);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        .progress-label {
+            text-align: center; font-size: 12px; color: var(--text-dim); margin-top: 4px;
+        }
+
+        /* Stats row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 0 16px 12px;
+        }
+        .stat-box {
+            text-align: center;
+            padding: 10px 4px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+        }
+        .stat-value { font-size: 22px; font-weight: 800; }
+        .stat-value.green { color: var(--green); }
+        .stat-value.gold { color: var(--gold-light); }
+        .stat-value.red { color: var(--red); }
+        .stat-value.blue { color: var(--blue); }
+        .stat-label { font-size: 10px; color: var(--text-dim); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Section headers */
+        .section-header {
+            padding: 14px 16px 8px;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-header .icon { font-size: 16px; }
+        .section-header.green { color: var(--green); }
+        .section-header.blue { color: var(--blue); }
+        .section-header.dim { color: var(--text-dim); }
+
+        /* Match cards */
+        .match-card {
+            margin: 0 16px 8px;
+            padding: 12px 14px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+        }
+        .match-card.active {
+            border: 2px solid var(--green);
+            box-shadow: 0 0 20px var(--green-glow);
+        }
+        .match-card.next {
+            border-left: 3px solid var(--blue);
+        }
+        .match-card.played {
+            opacity: 0.6;
+        }
+        .match-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .match-comp-name { font-size: 11px; font-weight: 700; color: var(--orange); text-transform: uppercase; }
+        .match-resource { font-size: 11px; color: var(--green); font-weight: 600; }
+        .match-status-tag {
+            font-size: 10px; font-weight: 700; padding: 2px 8px;
+            border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .match-status-tag.now { background: rgba(92,216,92,0.2); color: var(--green); }
+        .match-status-tag.waiting { background: rgba(104,152,232,0.15); color: var(--blue); }
+        .match-status-tag.done { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+
+        .match-teams-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 8px 0;
+        }
+        .match-team-name {
+            font-size: 16px;
+            font-weight: 700;
+            flex: 1;
+        }
+        .match-team-name.left { text-align: right; }
+        .match-team-name.right { text-align: left; }
+        .match-team-name.me { color: var(--gold-light); }
+        .match-vs { font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
+        .match-score-display {
+            font-size: 20px; font-weight: 800; color: var(--green);
+            flex-shrink: 0; min-width: 60px; text-align: center;
+        }
+        .match-result-tag {
+            text-align: center;
+            font-size: 11px; font-weight: 700;
+            margin-top: 2px;
+        }
+        .match-result-tag.win { color: var(--green); }
+        .match-result-tag.draw { color: var(--gold-light); }
+        .match-result-tag.loss { color: var(--red); }
+
+        /* ETA badge */
+        .match-eta {
+            text-align: center;
+            font-size: 12px;
+            color: var(--blue);
+            margin-top: 4px;
+        }
+
+        /* Score input for active matches */
+        .score-input-row {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            margin: 8px 0 4px;
+        }
+        .score-input {
+            width: 60px; height: 44px;
+            text-align: center; font-size: 22px; font-weight: 700;
+            background: var(--bg); color: var(--text);
+            border: 2px solid var(--card-border); border-radius: 10px;
+            outline: none;
+        }
+        .score-input:focus { border-color: var(--green); }
+        .score-sep { font-size: 20px; color: var(--text-dim); }
+
+        .btn-save {
+            display: block; width: 100%;
+            padding: 10px; margin-top: 6px;
+            background: var(--green); color: #000;
+            border: none; border-radius: 10px;
+            font-size: 15px; font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-save:active { opacity: 0.8; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            padding: 10px 24px; border-radius: 12px;
+            font-size: 14px; font-weight: 600;
+            z-index: 999; opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast.show { opacity: 1; }
+        .toast.success { background: var(--green); color: #000; }
+        .toast.error { background: var(--red); color: #fff; }
+
+        /* Standings link */
+        .standings-link {
+            display: block; text-align: center;
+            padding: 12px; margin: 16px;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            color: var(--blue);
+            font-size: 14px; font-weight: 600;
+            text-decoration: none;
+        }
+
+        /* No matches placeholder */
+        .no-matches {
+            text-align: center; padding: 30px; color: var(--text-dim); font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="team-header">
+    <div class="team-event-name">{{ event.name }}</div>
+    <div class="team-name">{{ team.name }}</div>
+    {% if team.players %}
+    <div class="team-players">{{ team.players | join(' & ') }}</div>
+    {% endif %}
+    <div id="rank-badge"></div>
+</div>
+
+<!-- Progress -->
+<div class="progress-section">
+    <div class="progress-outer">
+        <div class="progress-inner" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="progress-label" id="progress-label"></div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row" id="stats-row">
+    <div class="stat-box"><div class="stat-value green" id="stat-wins">-</div><div class="stat-label">Vundet</div></div>
+    <div class="stat-box"><div class="stat-value gold" id="stat-draws">-</div><div class="stat-label">Uafgjort</div></div>
+    <div class="stat-box"><div class="stat-value red" id="stat-losses">-</div><div class="stat-label">Tabt</div></div>
+    <div class="stat-box"><div class="stat-value blue" id="stat-points">-</div><div class="stat-label">Point</div></div>
+</div>
+
+<!-- Matches -->
+<div id="matches-container">
+    {% if event.status == 'setup' %}
+    <div class="no-matches">Eventet er ikke startet endnu</div>
+    {% else %}
+    <div class="no-matches">Indlæser...</div>
+    {% endif %}
+</div>
+
+<!-- Regler -->
+<div id="rules-container"></div>
+
+<a href="/event/{{ event.id }}/skaerm" class="standings-link">Se samlet stilling og storskærm</a>
+
+<div id="toast-el" class="toast"></div>
+
+<script>
+const EVENT_ID = "{{ event.id }}";
+const TEAM_CODE = "{{ team.code }}";
+const TEAM_ID = "{{ team.id }}";
+
+function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+function displayName(teams, teamId) {
+    const t = teams.find(x => x.id === teamId);
+    if (!t) return teamId;
+    if (t.players && t.players.length > 0) return `${t.name}: ${t.players.join(' & ')}`;
+    return t.name;
+}
+
+function showToast(msg, isError) {
+    const el = document.getElementById('toast-el');
+    el.textContent = msg;
+    el.className = 'toast show ' + (isError ? 'error' : 'success');
+    setTimeout(() => el.className = 'toast', 2500);
+}
+
+function render(evt, standings) {
+    const team = evt.teams.find(t => t.id === TEAM_ID);
+    if (!team) return;
+
+    // --- Rank badge ---
+    const rankIdx = standings ? standings.findIndex(s => s.team_id === TEAM_ID) : -1;
+    const myStanding = rankIdx >= 0 ? standings[rankIdx] : null;
+    const rank = rankIdx >= 0 ? rankIdx + 1 : null;
+    const badgeEl = document.getElementById('rank-badge');
+    if (rank) {
+        const rankClass = rank <= 3 ? `r${rank}` : 'other';
+        const medals = { 1: '🏆', 2: '🥈', 3: '🥉' };
+        const medal = medals[rank] || '';
+        badgeEl.innerHTML = `<span class="team-rank-badge ${rankClass}">${medal} ${rank}. plads af ${standings.length}</span>`;
+    } else {
+        badgeEl.innerHTML = '';
+    }
+
+    // --- Stats ---
+    if (myStanding) {
+        document.getElementById('stat-wins').textContent = myStanding.won;
+        document.getElementById('stat-draws').textContent = myStanding.drawn;
+        document.getElementById('stat-losses').textContent = myStanding.lost;
+        document.getElementById('stat-points').textContent = myStanding.total_points;
+    }
+
+    // --- Progress ---
+    let totalMatches = 0, playedMatches = 0;
+    for (const comp of evt.competitions) {
+        if (comp.type !== 'round-robin') continue;
+        totalMatches += comp.matches.length;
+        playedMatches += comp.matches.filter(m => m.status === 'played').length;
+    }
+    const pct = totalMatches > 0 ? Math.round(playedMatches / totalMatches * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-label').textContent =
+        totalMatches > 0 ? `Turnering: ${playedMatches} af ${totalMatches} kampe (${pct}%)` : '';
+
+    // --- Collect all my matches ---
+    let activeMatches = [];
+    let waitingMatches = [];
+    let playedList = [];
+
+    for (const comp of evt.competitions) {
+        if (comp.type !== 'round-robin') continue;
+        for (const m of comp.matches) {
+            if (m.team_a_id !== TEAM_ID && m.team_b_id !== TEAM_ID) continue;
+            const entry = { ...m, compName: comp.name, compId: comp.id };
+            if (m.status === 'active') activeMatches.push(entry);
+            else if (m.status === 'waiting') waitingMatches.push(entry);
+            else if (m.status === 'played') playedList.push(entry);
+        }
+    }
+
+    waitingMatches.sort((a, b) => (a.queue_pos || 0) - (b.queue_pos || 0));
+
+    // --- Estimate time to next match ---
+    // Rough estimate: count active matches for other teams before my waiting matches
+    let etaMinutes = null;
+    if (waitingMatches.length > 0 && activeMatches.length === 0) {
+        // Count how many matches are ahead in queue on the same resource
+        const nextMatch = waitingMatches[0];
+        let matchesAhead = 0;
+        for (const comp of evt.competitions) {
+            if (comp.type !== 'round-robin') continue;
+            for (const m of comp.matches) {
+                if (m.resource_label === nextMatch.resource_label && m.status === 'active') {
+                    matchesAhead++;
+                }
+                if (m.resource_label === nextMatch.resource_label && m.status === 'waiting' && m.queue_pos < nextMatch.queue_pos) {
+                    matchesAhead++;
+                }
+            }
+        }
+        etaMinutes = matchesAhead * 5; // ~5 min per match
+    }
+
+    // --- Build HTML ---
+    const container = document.getElementById('matches-container');
+    let html = '';
+
+    // Active matches
+    if (activeMatches.length > 0) {
+        html += `<div class="section-header green"><span class="icon">🔥</span> Spilles nu</div>`;
+        for (const m of activeMatches) {
+            const isA = m.team_a_id === TEAM_ID;
+            const oppId = isA ? m.team_b_id : m.team_a_id;
+            const oppName = displayName(evt.teams, oppId);
+            html += `<div class="match-card active">
+                <div class="match-card-header">
+                    <span class="match-comp-name">${escapeHtml(m.compName)}</span>
+                    <span class="match-resource">${escapeHtml(m.resource_label || '')}</span>
+                    <span class="match-status-tag now">Nu</span>
+                </div>
+                <div class="match-teams-row">
+                    <span class="match-team-name left me">${escapeHtml(displayName(evt.teams, TEAM_ID))}</span>
+                    <span class="match-vs">vs</span>
+                    <span class="match-team-name right">${escapeHtml(oppName)}</span>
+                </div>
+                <div class="score-input-row">
+                    <input type="number" min="0" class="score-input" id="sa-${m.id}" placeholder="0">
+                    <span class="score-sep">—</span>
+                    <input type="number" min="0" class="score-input" id="sb-${m.id}" placeholder="0">
+                </div>
+                <button class="btn-save" onclick="saveResult('${m.compId}','${m.id}',${isA})">Gem resultat</button>
+            </div>`;
+        }
+    }
+
+    // Waiting matches
+    if (waitingMatches.length > 0) {
+        html += `<div class="section-header blue"><span class="icon">⏳</span> Kommende kampe</div>`;
+        for (let i = 0; i < waitingMatches.length; i++) {
+            const m = waitingMatches[i];
+            const isA = m.team_a_id === TEAM_ID;
+            const oppId = isA ? m.team_b_id : m.team_a_id;
+            const oppName = displayName(evt.teams, oppId);
+            const isNext = i === 0 && activeMatches.length === 0;
+            html += `<div class="match-card${isNext ? ' next' : ''}">
+                <div class="match-card-header">
+                    <span class="match-comp-name">${escapeHtml(m.compName)}</span>
+                    <span class="match-resource">${escapeHtml(m.resource_label || '')}</span>
+                    <span class="match-status-tag waiting">${isNext ? 'Næste' : 'Venter'}</span>
+                </div>
+                <div class="match-teams-row">
+                    <span class="match-team-name left me">${escapeHtml(displayName(evt.teams, TEAM_ID))}</span>
+                    <span class="match-vs">vs</span>
+                    <span class="match-team-name right">${escapeHtml(oppName)}</span>
+                </div>
+                ${isNext && etaMinutes !== null ? `<div class="match-eta">⏱ Ca. ${etaMinutes > 0 ? etaMinutes + ' min' : 'snart!'}</div>` : ''}
+            </div>`;
+        }
+    }
+
+    // Played matches
+    if (playedList.length > 0) {
+        html += `<div class="section-header dim"><span class="icon">✅</span> Afsluttede kampe</div>`;
+        for (const m of playedList) {
+            const isA = m.team_a_id === TEAM_ID;
+            const oppId = isA ? m.team_b_id : m.team_a_id;
+            const oppName = displayName(evt.teams, oppId);
+            const myScore = isA ? m.score_a : m.score_b;
+            const theirScore = isA ? m.score_b : m.score_a;
+            let resultClass = 'draw', resultText = 'Uafgjort';
+            if (myScore > theirScore) { resultClass = 'win'; resultText = 'Vundet'; }
+            else if (myScore < theirScore) { resultClass = 'loss'; resultText = 'Tabt'; }
+            html += `<div class="match-card played">
+                <div class="match-card-header">
+                    <span class="match-comp-name">${escapeHtml(m.compName)}</span>
+                    <span class="match-status-tag done">Spillet</span>
+                </div>
+                <div class="match-teams-row">
+                    <span class="match-team-name left me">${escapeHtml(displayName(evt.teams, TEAM_ID))}</span>
+                    <span class="match-score-display">${myScore} — ${theirScore}</span>
+                    <span class="match-team-name right">${escapeHtml(oppName)}</span>
+                </div>
+                <div class="match-result-tag ${resultClass}">${resultText}</div>
+            </div>`;
+        }
+    }
+
+    // Ranking competitions
+    for (const comp of evt.competitions) {
+        if (comp.type !== 'ranking') continue;
+        const place = comp.results[TEAM_ID];
+        const medals = { 1: '🏆', 2: '🥈', 3: '🥉' };
+        html += `<div class="match-card${place === 1 ? ' active' : ''}">
+            <div class="match-card-header">
+                <span class="match-comp-name">${escapeHtml(comp.name)}</span>
+                <span class="match-status-tag done">Rangering</span>
+            </div>
+            <div style="text-align:center;padding:8px;font-size:18px;font-weight:700;">
+                ${place ? `${medals[place] || ''} ${place}. plads${place === 1 ? ' — 3 point!' : ''}` : 'Ikke rangeret endnu'}
+            </div>
+        </div>`;
+    }
+
+    if (!activeMatches.length && !waitingMatches.length && !playedList.length &&
+        !evt.competitions.some(c => c.type === 'ranking')) {
+        html = '<div class="no-matches">Ingen kampe endnu</div>';
+    }
+
+    container.innerHTML = html;
+
+    // Render rules
+    const rulesContainer = document.getElementById('rules-container');
+    if (rulesContainer) {
+        let rulesHtml = '';
+        for (const comp of evt.competitions) {
+            if (comp.rules && comp.rules.trim()) {
+                rulesHtml += `<div class="match-card" style="opacity:0.9;">
+                    <div class="match-card-header">
+                        <span class="match-comp-name">${escapeHtml(comp.name)}</span>
+                        <span class="match-status-tag done">Regler</span>
+                    </div>
+                    <div style="font-size:13px;white-space:pre-line;line-height:1.5;color:var(--text);padding:4px 0;">
+                        ${escapeHtml(comp.rules)}
+                    </div>
+                </div>`;
+            }
+        }
+        if (rulesHtml) {
+            rulesContainer.innerHTML = `<div class="section-header dim"><span class="icon">📋</span> Regler</div>` + rulesHtml;
+        } else {
+            rulesContainer.innerHTML = '';
+        }
+    }
+}
+
+async function saveResult(compId, matchId, isTeamA) {
+    let sa = parseInt(document.getElementById(`sa-${matchId}`).value);
+    let sb = parseInt(document.getElementById(`sb-${matchId}`).value);
+    if (isNaN(sa) || isNaN(sb) || sa < 0 || sb < 0) { showToast('Indtast begge scorer', true); return; }
+    // sa = my score, sb = opponent score → swap if we're team B
+    if (!isTeamA) [sa, sb] = [sb, sa];
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/result`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comp_id: compId, match_id: matchId, score_a: sa, score_b: sb })
+        });
+        const data = await res.json();
+        if (data.success) { showToast('Resultat gemt!'); if (document.activeElement) document.activeElement.blur(); poll(); }
+        else showToast(data.error, true);
+    } catch (e) { showToast('Netværksfejl', true); }
+}
+
+async function poll() {
+    // Skip re-render if user is typing in an input
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/standings`);
+        const data = await res.json();
+        if (data.success) render(data.event, data.standings);
+    } catch (e) {}
+}
+
+poll();
+setInterval(poll, 5000);
+</script>
+</body>
+</html>
