@@ -60,10 +60,33 @@
     <!-- Festlig mode -->
     <div class="section">
         <h3>Storskærm-effekter</h3>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
-            <input type="checkbox" id="festive-toggle" {% if event.get('festive_mode', true) %}checked{% endif %} style="width:18px;height:18px;" onchange="window._toggleFestive(this.checked)">
-            <span>Festlige effekter (balloner, raketter, konfetti, bannere)</span>
-        </label>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <input type="range" id="festive-slider" min="0" max="5"
+                value="{% set fm = event.get('festive_mode', 3) %}{% if fm is sameas true %}5{% elif fm is sameas false %}0{% elif fm is none %}3{% else %}{{ fm }}{% endif %}"
+                style="flex:1;min-width:150px;accent-color:var(--yellow);"
+                oninput="window._updateFestiveLabel(this.value)"
+                onchange="window._toggleFestive(this.value)">
+            <span id="festive-label" style="font-size:13px;min-width:180px;color:var(--subtext);"></span>
+        </div>
+        <script>
+            window._updateFestiveLabel = function(val) {
+                const labels = [
+                    '0 — Ingen effekter',
+                    '1 — Glødende partikler',
+                    '2 — + Gnistrende stjerner',
+                    '3 — + Balloner & konfetti',
+                    '4 — + Raketter & fyrværkeri',
+                    '5 — Fuld fest! 🎉'
+                ];
+                const el = document.getElementById('festive-label');
+                if (el) el.textContent = labels[val] || '';
+            };
+            // Init label
+            document.addEventListener('DOMContentLoaded', () => {
+                const slider = document.getElementById('festive-slider');
+                if (slider) window._updateFestiveLabel(slider.value);
+            });
+        </script>
     </div>
 
     <!-- Indstillinger -->

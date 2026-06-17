@@ -36,7 +36,7 @@ def create_event(name, enable_finals=True, tiebreak_mode="all_comps"):
         "winners": [],                   # [{"place": 1, "team_id": "...", "team_name": "..."}]
         "tiebreak_matches": [],          # auto-genererede tiebreak-kampe
         "screen_message": "",            # besked vist på storskærm (tom = ingen)
-        "festive_mode": True,            # festlige effekter på storskærm
+        "festive_mode": 3,               # festlige effekter på storskærm (0-5)
     }
     EVENTS[event_id] = event
     return event
@@ -80,7 +80,7 @@ def remove_team_from_event(event_id, team_id):
 
 def add_competition_to_event(event_id, name, comp_type="round-robin",
                               matches_per_team=None, resources=1,
-                              lowest_wins=False):
+                              lowest_wins=False, winner_only=False):
     event = EVENTS.get(event_id)
     if not event or event["status"] != "setup":
         return None
@@ -96,6 +96,7 @@ def add_competition_to_event(event_id, name, comp_type="round-robin",
         "points_for_win": 3,
         "points_for_draw": 1,
         "lowest_wins": lowest_wins,  # True = laveste score vinder (fx Dart 501)
+        "winner_only": winner_only,  # True = kun vælg vinder, ingen score (fx sømslåning)
         "rules": "",                 # Regler-tekst vist til deltagerne
         "matches": [],
         "results": {},

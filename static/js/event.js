@@ -169,6 +169,10 @@ function renderCompetitions(evt, progress) {
                         <input type="checkbox" id="new-comp-lowest" style="width:16px;height:16px;">
                         Laveste score vinder (fx Dart 501)
                     </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--subtext);width:100%;">
+                        <input type="checkbox" id="new-comp-winner-only" style="width:16px;height:16px;">
+                        Kun vinder/taber — ingen score (fx sømslåning)
+                    </label>
                 </div>
                 <button class="btn btn-primary btn-sm" onclick="window._addCompetition()">Tilføj</button>
             </div>
@@ -177,7 +181,7 @@ function renderCompetitions(evt, progress) {
                     const typeLabels = { 'round-robin': 'Alle mod alle', 'ranking': 'Vælg vinder', 'points': 'Pointgivning' };
                     const typeLabel = typeLabels[c.type] || c.type;
                     const extra = c.type === 'round-robin'
-                        ? ` — ${c.matches_per_team ? c.matches_per_team + ' kampe/hold' : 'fuld'}, ${c.resources || 1} bane${(c.resources || 1) > 1 ? 'r' : ''}${c.lowest_wins ? ', laveste vinder' : ''}`
+                        ? ` — ${c.matches_per_team ? c.matches_per_team + ' kampe/hold' : 'fuld'}, ${c.resources || 1} bane${(c.resources || 1) > 1 ? 'r' : ''}${c.lowest_wins ? ', laveste vinder' : ''}${c.winner_only ? ', kun vinder' : ''}`
                         : '';
                     const hasRules = c.rules && c.rules.trim().length > 0;
                     return `<div style="border: 1px solid var(--surface1); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;">
@@ -208,7 +212,8 @@ function renderCompetitions(evt, progress) {
         if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') window._addCompetition(); });
     } else {
         container.innerHTML = evt.competitions.map(c => {
-            const typeLabel = c.type === 'round-robin' ? 'Alle mod alle' : 'Pointgivning';
+            const typeLabels = { 'round-robin': 'Alle mod alle', 'ranking': 'Vælg vinder', 'points': 'Pointgivning' };
+            const typeLabel = typeLabels[c.type] || c.type;
             const extra = c.type === 'round-robin'
                 ? ` — ${c.matches_per_team ? c.matches_per_team + ' kampe/hold' : 'fuld'}, ${c.resources || 1} bane${(c.resources || 1) > 1 ? 'r' : ''}`
                 : '';
@@ -230,14 +235,26 @@ function renderCompetitions(evt, progress) {
                         </div>
                     </div>`;
             }
-            return `<div class="match-row" style="flex-direction:column;align-items:stretch;">
+            const hasRules = c.rules && c.rules.trim().length > 0;
+            return `<div style="border: 1px solid var(--surface1); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;">
                 <div style="display:flex;align-items:center;gap:8px;">
                     <span style="flex:1; font-weight: 500;">${escapeHtml(c.name)}</span>
                     <span class="event-status" style="background: var(--surface2); color: var(--text); font-size: 10px;">
                         ${typeLabel}${extra}
                     </span>
+                    <button class="btn btn-sm" style="font-size:11px;" onclick="document.getElementById('rules-${c.id}').style.display = document.getElementById('rules-${c.id}').style.display === 'none' ? 'block' : 'none'">
+                        ${hasRules ? '📋 Regler' : '📝 Tilføj regler'}
+                    </button>
                 </div>
                 ${progressHtml}
+                <div id="rules-${c.id}" style="display: none; margin-top: 8px;">
+                    <textarea id="rules-text-${c.id}" class="form-input" rows="4" style="width:100%;resize:vertical;font-size:12px;"
+                        placeholder="Skriv regler her...">${escapeHtml(c.rules || '')}</textarea>
+                    <div style="display:flex;gap:6px;margin-top:4px;">
+                        <button class="btn btn-success btn-sm" onclick="window._saveRules('${c.id}')">Gem regler</button>
+                        <button class="btn btn-secondary btn-sm" onclick="window._autoRules('${c.id}','${escapeHtml(c.name)}')">🔍 Hent standardregler</button>
+                    </div>
+                </div>
             </div>`;
         }).join('');
     }
@@ -250,8 +267,8 @@ window._toggleCompFields = function () {
     if (fields) fields.style.display = type === 'round-robin' ? 'flex' : 'none';
     if (help) {
         const helpTexts = {
-            'round-robin': 'Hold spiller mod hinanden i kampe. Point tildeles for sejr (3p), uafgjort (1p), tab (0p).',
-            'ranking': 'Ingen kampe — fx sømslåning, ølstafet. Alle hold deltager og du vælger vinderen. Vinderen får 3 point.',
+            'round-robin': 'Hold spiller mod hinanden i kampe. Point tildeles for sejr (3p), uafgjort (1p), tab (0p). Vælg "Kun vinder/taber" hvis der ikke er en score (fx sømslåning) — så trykker du bare på vinderholdet.',
+            'ranking': 'Ingen kampe — alle hold deltager samtidigt og du vælger vinderen bagefter. Vinderen får 3 point. God til fx ølstafet.',
             'points': 'Admin skriver frie point per hold. Brug til konkurrencer med eget pointsystem.',
         };
         help.textContent = helpTexts[type] || '';
@@ -311,18 +328,29 @@ function renderMatches(evt) {
                     const aName = teamName(evt.teams, m.team_a_id);
                     const bName = teamName(evt.teams, m.team_b_id);
                     const label = m.resource_label || '';
-                    html += `<div class="match-row" style="border-left: 3px solid var(--green); padding-left: 8px; background: var(--surface1);">
-                        <span style="font-size:10px;color:var(--green);font-weight:600;margin-right:4px;">${escapeHtml(label)}</span>
-                        <span class="match-team">${escapeHtml(aName)}</span>
-                        <div class="match-score">
-                            <input type="number" min="0" class="score-input" id="sa-${m.id}" value="${m.score_a !== null ? m.score_a : ''}" placeholder="-">
-                            <span class="match-vs">—</span>
-                            <input type="number" min="0" class="score-input" id="sb-${m.id}" value="${m.score_b !== null ? m.score_b : ''}" placeholder="-">
-                        </div>
-                        <span class="match-team">${escapeHtml(bName)}</span>
-                        <button class="btn btn-sm btn-success" onclick="window._saveResult('${comp.id}', '${m.id}')">Gem</button>
-                        <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:2px 6px;" onclick="window._postponeMatch('${comp.id}','${m.id}')" title="Udskyd">Udskyd</button>
-                    </div>`;
+                    if (comp.winner_only) {
+                        html += `<div class="match-row" style="border-left: 3px solid var(--green); padding-left: 8px; background: var(--surface1); flex-wrap: wrap;">
+                            <span style="font-size:10px;color:var(--green);font-weight:600;margin-right:4px;">${escapeHtml(label)}</span>
+                            <span style="font-size:12px;color:var(--subtext);width:100%;margin-bottom:4px;">Tryk på vinderen:</span>
+                            <button class="btn btn-sm" style="flex:1;padding:8px;font-size:14px;font-weight:600;" onclick="window._saveWinnerOnly('${comp.id}','${m.id}',true)">${escapeHtml(aName)} 👑</button>
+                            <span class="match-vs" style="margin:0 4px;">vs</span>
+                            <button class="btn btn-sm" style="flex:1;padding:8px;font-size:14px;font-weight:600;" onclick="window._saveWinnerOnly('${comp.id}','${m.id}',false)">${escapeHtml(bName)} 👑</button>
+                            <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:2px 6px;margin-top:4px;" onclick="window._postponeMatch('${comp.id}','${m.id}')" title="Udskyd">Udskyd</button>
+                        </div>`;
+                    } else {
+                        html += `<div class="match-row" style="border-left: 3px solid var(--green); padding-left: 8px; background: var(--surface1);">
+                            <span style="font-size:10px;color:var(--green);font-weight:600;margin-right:4px;">${escapeHtml(label)}</span>
+                            <span class="match-team">${escapeHtml(aName)}</span>
+                            <div class="match-score">
+                                <input type="number" min="0" class="score-input" id="sa-${m.id}" value="${m.score_a !== null ? m.score_a : ''}" placeholder="-">
+                                <span class="match-vs">—</span>
+                                <input type="number" min="0" class="score-input" id="sb-${m.id}" value="${m.score_b !== null ? m.score_b : ''}" placeholder="-">
+                            </div>
+                            <span class="match-team">${escapeHtml(bName)}</span>
+                            <button class="btn btn-sm btn-success" onclick="window._saveResult('${comp.id}', '${m.id}')">Gem</button>
+                            <button class="btn btn-sm btn-secondary" style="font-size:10px;padding:2px 6px;" onclick="window._postponeMatch('${comp.id}','${m.id}')" title="Udskyd">Udskyd</button>
+                        </div>`;
+                    }
                 }
             }
 
@@ -348,11 +376,21 @@ function renderMatches(evt) {
                 for (const m of played) {
                     const aName = teamName(evt.teams, m.team_a_id);
                     const bName = teamName(evt.teams, m.team_b_id);
-                    html += `<div class="match-row played" style="opacity: 0.5;">
-                        <span class="match-team">${escapeHtml(aName)}</span>
-                        <span style="font-weight:600;margin:0 8px;">${m.score_a} — ${m.score_b}</span>
-                        <span class="match-team">${escapeHtml(bName)}</span>
-                    </div>`;
+                    if (comp.winner_only) {
+                        const winnerName = m.score_a > m.score_b ? aName : bName;
+                        html += `<div class="match-row played" style="opacity: 0.5;">
+                            <span class="match-team">${escapeHtml(aName)}</span>
+                            <span style="margin:0 8px;">vs</span>
+                            <span class="match-team">${escapeHtml(bName)}</span>
+                            <span style="margin-left:8px;color:var(--green);font-weight:600;">🏆 ${escapeHtml(winnerName)}</span>
+                        </div>`;
+                    } else {
+                        html += `<div class="match-row played" style="opacity: 0.5;">
+                            <span class="match-team">${escapeHtml(aName)}</span>
+                            <span style="font-weight:600;margin:0 8px;">${m.score_a} — ${m.score_b}</span>
+                            <span class="match-team">${escapeHtml(bName)}</span>
+                        </div>`;
+                    }
                 }
             }
 
@@ -600,6 +638,8 @@ window._addCompetition = async function () {
         if (mptEl && mptEl.value) body.matches_per_team = parseInt(mptEl.value);
         if (resEl && resEl.value) body.resources = parseInt(resEl.value);
         if (lowestEl && lowestEl.checked) body.lowest_wins = true;
+        const winnerOnlyEl = document.getElementById('new-comp-winner-only');
+        if (winnerOnlyEl && winnerOnlyEl.checked) body.winner_only = true;
     }
     const eventId = document.body.dataset.eventId;
     const res = await fetch(`/api/event/${eventId}/add-competition`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -680,6 +720,17 @@ window._setPoints = async function (compId, teamId) {
     const res = await fetch(`/api/event/${eventId}/points`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comp_id: compId, team_id: teamId, points: pts }) });
     const data = await res.json();
     if (data.success) { loadEventAdmin(eventId); showToast('Point gemt'); }
+    else showToast(data.error, true);
+};
+
+window._saveWinnerOnly = async function (compId, matchId, teamAWins) {
+    // winner_only match: registrer 1-0 eller 0-1
+    const eventId = document.body.dataset.eventId;
+    const scoreA = teamAWins ? 1 : 0;
+    const scoreB = teamAWins ? 0 : 1;
+    const res = await fetch(`/api/event/${eventId}/result`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comp_id: compId, match_id: matchId, score_a: scoreA, score_b: scoreB }) });
+    const data = await res.json();
+    if (data.success) { loadEventAdmin(eventId); showToast('Vinder registreret!'); }
     else showToast(data.error, true);
 };
 
@@ -802,16 +853,18 @@ window._clearScreenMessage = async function () {
     }
 };
 
-window._toggleFestive = async function (enabled) {
+window._toggleFestive = async function (level) {
+    level = parseInt(level) || 0;
     const eventId = document.body.dataset.eventId;
     const res = await fetch(`/api/event/${eventId}/toggle-festive`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ festive_mode: enabled }),
+        body: JSON.stringify({ festive_mode: level }),
     });
     const data = await res.json();
     if (data.success) {
-        showToast(enabled ? 'Festlige effekter aktiveret' : 'Festlige effekter deaktiveret');
+        const labels = ['Ingen effekter', 'Partikler', 'Stjerner', 'Balloner & konfetti', 'Raketter', 'Fuld fest!'];
+        showToast('Storskærm: ' + (labels[level] || level));
     }
 };
 

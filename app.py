@@ -162,8 +162,9 @@ async def api_add_competition(request: Request, event_id: str):
     except (ValueError, TypeError):
         resources = 1
     lowest_wins = bool(data.get("lowest_wins", False))
+    winner_only = bool(data.get("winner_only", False))
     comp = data_store.add_competition_to_event(
-        event_id, name, comp_type, matches_per_team, resources, lowest_wins)
+        event_id, name, comp_type, matches_per_team, resources, lowest_wins, winner_only)
     if not comp:
         return JSONResponse({"success": False, "error": "Kunne ikke tilføje konkurrence"}, status_code=400)
     return JSONResponse({"success": True, "competition": comp})
@@ -359,7 +360,12 @@ async def api_toggle_festive(request: Request, event_id: str):
     if not event:
         return JSONResponse({"success": False, "error": "Event ikke fundet"}, status_code=404)
     data = await request.json()
-    event["festive_mode"] = bool(data.get("festive_mode", True))
+    level = data.get("festive_mode", 3)
+    try:
+        level = max(0, min(5, int(level)))
+    except (ValueError, TypeError):
+        level = 3
+    event["festive_mode"] = level
     return JSONResponse({"success": True, "festive_mode": event["festive_mode"]})
 
 

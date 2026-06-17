@@ -32,9 +32,7 @@
             flex-shrink: 0;
             display: flex;
             align-items: stretch;
-            max-width: 1600px;
             width: 100%;
-            margin: 0 auto;
             padding: 6px 32px 8px;
         }
 
@@ -162,8 +160,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            max-width: 1600px;
-            margin: 0 auto;
+            width: 100%;
             padding: 0 32px;
             min-height: 0;
             overflow: hidden;
@@ -238,9 +235,8 @@
         /* ==================== PROGRESS BAR ==================== */
         .progress-strip {
             flex-shrink: 0;
-            max-width: 1600px;
             width: 100%;
-            margin: 6px auto 0;
+            margin: 6px 0 0;
             padding: 0 32px;
         }
         .progress-outer {
@@ -383,6 +379,150 @@
             50% { transform: scale(1.2) rotate(180deg); opacity: 0.9; }
         }
 
+        /* ===== FINISHED: Podium + Print ===== */
+        .finished-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            padding: 0 32px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .podium-section {
+            flex-shrink: 0;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 0;
+            padding: 20px 0 0;
+        }
+
+        .podium-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .podium-info {
+            margin-bottom: 8px;
+        }
+
+        .podium-emoji { font-size: 36px; margin-bottom: 2px; }
+        .podium-name {
+            font-size: 20px;
+            font-weight: 800;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .podium-points { font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+        .podium-pillar {
+            width: 180px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 900;
+            color: rgba(0,0,0,0.3);
+        }
+
+        .podium-block.p1 .podium-name { color: #f9e2af; font-size: 26px; }
+        .podium-block.p1 .podium-points { color: #f9e2af; }
+        .podium-block.p1 .podium-pillar {
+            height: 160px;
+            background: linear-gradient(180deg, #f9e2af, #d4a44c);
+            box-shadow: 0 0 30px rgba(249,226,175,0.3);
+        }
+
+        .podium-block.p2 .podium-name { color: #89b4fa; }
+        .podium-block.p2 .podium-points { color: #89b4fa; }
+        .podium-block.p2 .podium-pillar {
+            height: 110px;
+            background: linear-gradient(180deg, #89b4fa, #5070b0);
+        }
+
+        .podium-block.p3 .podium-name { color: #fab387; }
+        .podium-block.p3 .podium-points { color: #fab387; }
+        .podium-block.p3 .podium-pillar {
+            height: 80px;
+            background: linear-gradient(180deg, #fab387, #a07050);
+        }
+
+        .finished-standings-wrap {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            margin-top: 12px;
+            background: var(--mantle);
+            border: 1px solid var(--surface0);
+            border-radius: 12px;
+            padding: 10px 16px;
+            position: relative;
+        }
+        .finished-standings-wrap h2 {
+            font-size: 16px;
+            color: var(--blue);
+            margin: 0 0 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .finished-standings-scroll {
+            overflow: hidden;
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            height: calc(100% - 30px);
+        }
+        .finished-standings-content {
+            animation: scroll-standings 20s linear infinite;
+        }
+        @keyframes scroll-standings {
+            0%, 10% { transform: translateY(0); }
+            45%, 55% { transform: translateY(var(--scroll-dist, -200px)); }
+            90%, 100% { transform: translateY(0); }
+        }
+
+        .btn-print {
+            background: transparent;
+            border: 1px solid var(--surface1);
+            color: var(--subtext);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-print:hover { border-color: var(--blue); color: var(--blue); }
+
+        /* Print styles */
+        @media print {
+            body { background: #fff !important; color: #000 !important; overflow: visible !important; height: auto !important; }
+            .screen-mode { height: auto !important; }
+            .flow-row, .progress-strip, .screen-branding, .screen-message-overlay,
+            #particles, .page-glow, .btn-print, .scroll-toggle,
+            .particle, .balloon, .rocket, .sparkle, .confetti { display: none !important; }
+            .finished-view { overflow: visible !important; }
+            .finished-standings-wrap { overflow: visible !important; height: auto !important; }
+            .finished-standings-scroll { overflow: visible !important; height: auto !important; }
+            .finished-standings-content { animation: none !important; transform: none !important; }
+            .row2 { overflow: visible !important; height: auto !important; }
+            .panel { overflow: visible !important; }
+            .scroll-container { overflow: visible !important; height: auto !important; }
+            .scroll-content { transform: none !important; }
+            .podium-block.p1 .podium-name, .podium-block.p2 .podium-name, .podium-block.p3 .podium-name { color: #000; }
+            .podium-points { color: #333 !important; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+            th { background: #eee; }
+        }
+
         /* ===== TOP 3 CHANGE BANNER ===== */
         .top3-banner-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -480,11 +620,11 @@
         <div class="screen-subtitle" id="event-subtitle">Indlæser...</div>
     </div>
 
-    <!-- Row 1: Flow — Forrige → Spilles nu → Næste -->
-    <div class="flow-row">
-        <div class="flow-panel prev">
-            <h2>Forrige</h2>
-            <div id="flow-prev"><div class="flow-empty">Ingen endnu</div></div>
+    <!-- Row 1: Flow — Næste → Spilles nu → Forrige -->
+    <div class="flow-row" id="flow-row">
+        <div class="flow-panel next">
+            <h2>Næste — Gør klar til kamp!</h2>
+            <div id="flow-next"><div class="flow-empty">Ingen ventende</div></div>
         </div>
 
         <div class="flow-arrow">
@@ -502,18 +642,18 @@
         <div class="flow-arrow">
             <svg viewBox="0 0 40 40" fill="none">
                 <path d="M6 20 L30 20" stroke="var(--surface2)" stroke-width="3" stroke-linecap="round"/>
-                <path d="M24 13 L32 20 L24 27" stroke="var(--blue)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M24 13 L32 20 L24 27" stroke="var(--subtext)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </div>
 
-        <div class="flow-panel next">
-            <h2>Næste — Gør klar til kamp!</h2>
-            <div id="flow-next"><div class="flow-empty">Ingen ventende</div></div>
+        <div class="flow-panel prev">
+            <h2>Forrige</h2>
+            <div id="flow-prev"><div class="flow-empty">Ingen endnu</div></div>
         </div>
     </div>
 
-    <!-- Row 2: Top 3 (left) + Stilling (right) -->
-    <div class="row2">
+    <!-- Row 2: Top 3 (left) + Stilling (right) — hidden when finished -->
+    <div class="row2" id="row2-active">
         <div class="panel">
             <h2 class="top3-h2" id="top3-title">Top 3</h2>
             <div id="top3-area"><div class="top3-empty">Indlæser...</div></div>
@@ -528,6 +668,19 @@
             </h2>
             <div class="scroll-container" id="standings-scroll">
                 <div class="scroll-content" id="screen-standings"><p class="muted">Indlæser...</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finished view: Podium + scrolling standings -->
+    <div class="finished-view" id="finished-view" style="display:none;">
+        <div class="podium-section" id="podium-area"></div>
+        <div class="finished-standings-wrap">
+            <h2>Samlet stilling
+                <button class="btn-print" onclick="printStandings()">🖨️ Print stilling</button>
+            </h2>
+            <div class="finished-standings-scroll">
+                <div class="finished-standings-content" id="finished-standings"></div>
             </div>
         </div>
     </div>
@@ -566,18 +719,35 @@ function teamDisplayName(teams, teamId) {
 }
 
 // ==================== FESTIVE EFFECTS ====================
+// Level 0: Ingen  |  1: Partikler  |  2: +Stjerner  |  3: +Balloner+konfetti  |  4: +Raketter  |  5: +Bannere
 
-function spawnFestiveEffects() {
+let currentFestiveLevel = 0;
+let rocketInterval = null;
+
+function applyFestiveLevel(level) {
+    // Backwards compat: true → 5, false → 0
+    if (level === true) level = 5;
+    if (level === false || level === undefined || level === null) level = 0;
+    level = Math.max(0, Math.min(5, parseInt(level) || 0));
+
+    if (level === currentFestiveLevel) return;
+    currentFestiveLevel = level;
+
     const container = document.getElementById('particles');
+    container.innerHTML = '';
+    if (rocketInterval) { clearInterval(rocketInterval); rocketInterval = null; }
 
-    // 1) Glowing orbs (upgraded particles — bigger, brighter, more)
+    if (level === 0) return;
+
+    // Level 1+: Glowing orbs
     const orbColors = [
         'rgba(166,227,161,0.6)', 'rgba(137,180,250,0.6)',
         'rgba(249,226,175,0.5)', 'rgba(245,194,231,0.5)',
         'rgba(148,226,213,0.5)', 'rgba(250,179,135,0.5)',
         'rgba(203,166,247,0.5)', 'rgba(243,139,168,0.4)',
     ];
-    for (let i = 0; i < 25; i++) {
+    const orbCount = level >= 3 ? 25 : level >= 2 ? 15 : 8;
+    for (let i = 0; i < orbCount; i++) {
         const p = document.createElement('div');
         p.className = 'particle';
         const size = 6 + Math.random() * 12;
@@ -593,110 +763,116 @@ function spawnFestiveEffects() {
         container.appendChild(p);
     }
 
-    // 2) Balloons
-    const balloonEmojis = ['🎈', '🎈', '🎈', '🎉', '🎊'];
-    for (let i = 0; i < 8; i++) {
-        const b = document.createElement('div');
-        b.className = 'balloon';
-        b.textContent = balloonEmojis[Math.floor(Math.random() * balloonEmojis.length)];
-        const size = 24 + Math.random() * 18;
-        b.style.cssText = `
-            left: ${5 + Math.random() * 90}%;
-            font-size: ${size}px;
-            animation: float-balloon ${22 + Math.random() * 16}s ease-in-out infinite;
-            animation-delay: ${Math.random() * 20}s;
-        `;
-        container.appendChild(b);
-    }
-
-    // 3) Confetti rain
-    const confettiColors = ['#a6e3a1', '#89b4fa', '#f9e2af', '#f5c2e7', '#fab387', '#94e2d5', '#cba6f7', '#f38ba8', '#eba0ac', '#74c7ec'];
-    for (let i = 0; i < 25; i++) {
-        const c = document.createElement('div');
-        c.className = 'confetti';
-        const w = 5 + Math.random() * 8;
-        const h = 8 + Math.random() * 10;
-        c.style.cssText = `
-            left: ${Math.random() * 100}%;
-            width: ${w}px; height: ${h}px;
-            background: ${confettiColors[Math.floor(Math.random() * confettiColors.length)]};
-            animation: confetti-fall ${8 + Math.random() * 12}s linear infinite;
-            animation-delay: ${Math.random() * 15}s;
-            opacity: 0;
-        `;
-        container.appendChild(c);
-    }
-
-    // 4) Sparkle twinkles
-    const sparkleChars = ['✨', '⭐', '💫', '🌟'];
-    for (let i = 0; i < 12; i++) {
-        const s = document.createElement('div');
-        s.className = 'sparkle';
-        s.textContent = sparkleChars[Math.floor(Math.random() * sparkleChars.length)];
-        s.style.cssText = `
-            left: ${Math.random() * 95}%;
-            top: ${Math.random() * 90}%;
-            font-size: ${12 + Math.random() * 14}px;
-            animation: sparkle-twinkle ${3 + Math.random() * 4}s ease-in-out infinite;
-            animation-delay: ${Math.random() * 6}s;
-        `;
-        container.appendChild(s);
-    }
-
-    // 5) Periodic rockets with sparkle bursts
-    function launchRocket() {
-        const r = document.createElement('div');
-        r.className = 'rocket';
-        r.textContent = '🚀';
-        const startX = 10 + Math.random() * 80;
-        r.style.cssText = `
-            left: ${startX}%;
-            font-size: ${26 + Math.random() * 10}px;
-            animation: rocket-launch 3s ease-out forwards;
-        `;
-        container.appendChild(r);
-
-        // Spawn sparkle burst after rocket reaches top
-        setTimeout(() => {
-            r.remove();
-            spawnBurst(startX);
-        }, 2400);
-    }
-
-    function spawnBurst(x) {
-        const burstEmojis = ['✨', '💥', '🌟', '⭐', '🎆'];
-        const angles = [0, 45, 90, 135, 180, 225, 270, 315];
-        for (let i = 0; i < 8; i++) {
+    // Level 2+: Sparkle twinkles
+    if (level >= 2) {
+        const sparkleChars = ['✨', '⭐', '💫', '🌟'];
+        const sparkleCount = level >= 4 ? 16 : level >= 3 ? 12 : 6;
+        for (let i = 0; i < sparkleCount; i++) {
             const s = document.createElement('div');
-            s.className = 'sparkle-burst';
-            s.textContent = burstEmojis[Math.floor(Math.random() * burstEmojis.length)];
-            const angle = angles[i] * Math.PI / 180;
-            const dist = 40 + Math.random() * 60;
-            const dx = Math.cos(angle) * dist;
-            const dy = Math.sin(angle) * dist;
+            s.className = 'sparkle';
+            s.textContent = sparkleChars[Math.floor(Math.random() * sparkleChars.length)];
             s.style.cssText = `
-                left: ${x}%;
-                top: 25%;
-                font-size: ${14 + Math.random() * 10}px;
-                animation: sparkle-explode 1.2s ease-out forwards;
+                left: ${Math.random() * 95}%;
+                top: ${Math.random() * 90}%;
+                font-size: ${12 + Math.random() * 14}px;
+                animation: sparkle-twinkle ${3 + Math.random() * 4}s ease-in-out infinite;
+                animation-delay: ${Math.random() * 6}s;
             `;
-            // Use CSS custom properties for direction
-            s.animate([
-                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-                { transform: `translate(${dx}px, ${dy}px) scale(0.3)`, opacity: 0 }
-            ], { duration: 1200, easing: 'ease-out', fill: 'forwards' });
             container.appendChild(s);
-            setTimeout(() => s.remove(), 1300);
         }
     }
 
-    // Launch first rocket after 3s, then every 8-15s
-    setTimeout(launchRocket, 3000);
-    setInterval(() => {
-        launchRocket();
-    }, 8000 + Math.random() * 7000);
+    // Level 3+: Balloons + confetti
+    if (level >= 3) {
+        const balloonEmojis = ['🎈', '🎈', '🎈', '🎉', '🎊'];
+        const balloonCount = level >= 5 ? 10 : level >= 4 ? 8 : 5;
+        for (let i = 0; i < balloonCount; i++) {
+            const b = document.createElement('div');
+            b.className = 'balloon';
+            b.textContent = balloonEmojis[Math.floor(Math.random() * balloonEmojis.length)];
+            const size = 24 + Math.random() * 18;
+            b.style.cssText = `
+                left: ${5 + Math.random() * 90}%;
+                font-size: ${size}px;
+                animation: float-balloon ${22 + Math.random() * 16}s ease-in-out infinite;
+                animation-delay: ${Math.random() * 20}s;
+            `;
+            container.appendChild(b);
+        }
+
+        const confettiColors = ['#a6e3a1', '#89b4fa', '#f9e2af', '#f5c2e7', '#fab387', '#94e2d5', '#cba6f7', '#f38ba8', '#eba0ac', '#74c7ec'];
+        const confettiCount = level >= 5 ? 35 : level >= 4 ? 25 : 12;
+        for (let i = 0; i < confettiCount; i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            const w = 5 + Math.random() * 8;
+            const h = 8 + Math.random() * 10;
+            c.style.cssText = `
+                left: ${Math.random() * 100}%;
+                width: ${w}px; height: ${h}px;
+                background: ${confettiColors[Math.floor(Math.random() * confettiColors.length)]};
+                animation: confetti-fall ${8 + Math.random() * 12}s linear infinite;
+                animation-delay: ${Math.random() * 15}s;
+                opacity: 0;
+            `;
+            container.appendChild(c);
+        }
+    }
+
+    // Level 4+: Rockets with sparkle bursts
+    if (level >= 4) {
+        function launchRocket() {
+            if (currentFestiveLevel < 4) return;
+            const r = document.createElement('div');
+            r.className = 'rocket';
+            r.textContent = '🚀';
+            const startX = 10 + Math.random() * 80;
+            r.style.cssText = `
+                left: ${startX}%;
+                font-size: ${26 + Math.random() * 10}px;
+                animation: rocket-launch 3s ease-out forwards;
+            `;
+            container.appendChild(r);
+            setTimeout(() => {
+                r.remove();
+                spawnBurst(startX);
+            }, 2400);
+        }
+
+        function spawnBurst(x) {
+            const burstEmojis = ['✨', '💥', '🌟', '⭐', '🎆'];
+            const angles = [0, 45, 90, 135, 180, 225, 270, 315];
+            for (let i = 0; i < 8; i++) {
+                const s = document.createElement('div');
+                s.className = 'sparkle-burst';
+                s.textContent = burstEmojis[Math.floor(Math.random() * burstEmojis.length)];
+                const angle = angles[i] * Math.PI / 180;
+                const dist = 40 + Math.random() * 60;
+                const dx = Math.cos(angle) * dist;
+                const dy = Math.sin(angle) * dist;
+                s.style.cssText = `
+                    left: ${x}%;
+                    top: 25%;
+                    font-size: ${14 + Math.random() * 10}px;
+                    animation: sparkle-explode 1.2s ease-out forwards;
+                `;
+                s.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${dx}px, ${dy}px) scale(0.3)`, opacity: 0 }
+                ], { duration: 1200, easing: 'ease-out', fill: 'forwards' });
+                container.appendChild(s);
+                setTimeout(() => s.remove(), 1300);
+            }
+        }
+
+        const rocketFreq = level >= 5 ? 6000 : 10000;
+        setTimeout(launchRocket, 3000);
+        rocketInterval = setInterval(launchRocket, rocketFreq + Math.random() * 5000);
+    }
 }
-spawnFestiveEffects();
+
+// Start with a default — will be overridden on first poll
+applyFestiveLevel(3);
 
 // ==================== FLOW ====================
 
@@ -713,7 +889,7 @@ function renderFlow(evt) {
     for (const comp of evt.competitions) {
         if (comp.type === 'round-robin') {
             for (const m of comp.matches) {
-                const entry = { ...m, compName: comp.name };
+                const entry = { ...m, compName: comp.name, winnerOnly: !!comp.winner_only };
                 if (m.status === 'active') activeMatches.push(entry);
                 else if (m.status === 'waiting') nextMatches.push(entry);
                 else if (m.status === 'played') lastPlayed.push(entry);
@@ -748,6 +924,16 @@ function renderFlow(evt) {
         prevEl.innerHTML = recentPlayed.map(m => {
             const aName = teamDisplayName(evt.teams, m.team_a_id);
             const bName = teamDisplayName(evt.teams, m.team_b_id);
+            if (m.winnerOnly) {
+                const winnerName = m.score_a > m.score_b ? aName : bName;
+                return `<div class="flow-match${m.isTiebreak ? ' tiebreak' : ''}">
+                    <span class="comp-tag">${escapeHtml(m.compName)}</span>
+                    <span class="team">${escapeHtml(aName)}</span>
+                    <span class="vs">vs</span>
+                    <span class="team">${escapeHtml(bName)}</span>
+                    <span class="score" style="font-size:12px;">🏆 ${escapeHtml(winnerName)}</span>
+                </div>`;
+            }
             return `<div class="flow-match${m.isTiebreak ? ' tiebreak' : ''}">
                 <span class="comp-tag">${escapeHtml(m.compName)}</span>
                 <span class="team">${escapeHtml(aName)}</span>
@@ -1111,6 +1297,121 @@ function showTop3Banner(name, place) {
     setTimeout(() => overlay.remove(), 5200);
 }
 
+// ==================== PODIUM + FINISHED VIEW ====================
+
+let finishedRendered = false;
+
+function renderFinishedView(evt, standings) {
+    const flowRow = document.getElementById('flow-row');
+    const row2Active = document.getElementById('row2-active');
+    const finishedView = document.getElementById('finished-view');
+
+    const isFinished = evt.winners && evt.winners.length > 0;
+
+    if (!isFinished) {
+        flowRow.style.display = '';
+        row2Active.style.display = '';
+        finishedView.style.display = 'none';
+        finishedRendered = false;
+        return false;
+    }
+
+    // Switch to finished layout
+    flowRow.style.display = 'none';
+    row2Active.style.display = 'none';
+    finishedView.style.display = '';
+
+    if (finishedRendered) return true;
+    finishedRendered = true;
+
+    // Podium
+    const podium = document.getElementById('podium-area');
+    const medals = ['🏆', '🥈', '🥉'];
+    const order = []; // display order: 2nd, 1st, 3rd
+    const w2 = evt.winners.find(w => w.place === 2);
+    const w1 = evt.winners.find(w => w.place === 1);
+    const w3 = evt.winners.find(w => w.place === 3);
+    if (w2) order.push(w2);
+    if (w1) order.push(w1);
+    if (w3) order.push(w3);
+
+    const standingsMap = {};
+    if (standings) standings.forEach(s => standingsMap[s.team_id] = s);
+
+    podium.innerHTML = order.map(w => {
+        const s = standingsMap[w.team_id];
+        const pts = s ? s.total_points : 0;
+        const name = teamDisplayName(evt.teams, w.team_id);
+        return `<div class="podium-block p${w.place}">
+            <div class="podium-info">
+                <div class="podium-emoji">${medals[w.place - 1] || ''}</div>
+                <div class="podium-name">${escapeHtml(name)}</div>
+                <div class="podium-points">${pts} point</div>
+            </div>
+            <div class="podium-pillar">${w.place}</div>
+        </div>`;
+    }).join('');
+
+    // Full standings table
+    const finStandings = document.getElementById('finished-standings');
+    if (standings && standings.length > 0) {
+        let html = `<table class="screen-standings" style="width:100%;">
+            <thead><tr>
+                <th>#</th><th>Hold</th><th>K</th><th>V</th><th>U</th><th>T</th>
+                <th>MF</th><th>MM</th><th>+/-</th><th>Point</th>
+            </tr></thead><tbody>`;
+        standings.forEach((s, i) => {
+            const rankClass = i < 3 ? `rank-${i + 1}` : '';
+            const name = teamDisplayName(evt.teams, s.team_id);
+            html += `<tr class="${rankClass}">
+                <td>${i + 1}</td><td>${escapeHtml(name)}</td>
+                <td>${s.played}</td><td>${s.won}</td><td>${s.drawn}</td><td>${s.lost}</td>
+                <td>${s.goals_for}</td><td>${s.goals_against}</td>
+                <td>${s.goal_diff > 0 ? '+' : ''}${s.goal_diff}</td>
+                <td style="font-weight:700;font-size:20px;">${s.total_points}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        finStandings.innerHTML = html;
+
+        // Calculate scroll distance for animation
+        requestAnimationFrame(() => {
+            const scrollWrap = finStandings.closest('.finished-standings-scroll');
+            if (scrollWrap) {
+                const overflow = finStandings.scrollHeight - scrollWrap.offsetHeight;
+                if (overflow > 0) {
+                    finStandings.style.setProperty('--scroll-dist', `-${overflow}px`);
+                } else {
+                    finStandings.style.animation = 'none';
+                }
+            }
+        });
+    }
+
+    return true;
+}
+
+function printStandings() {
+    window.print();
+}
+
+// ==================== AUTO-TRIGGER WINNERS ====================
+
+let autoCheckTriggered = false;
+
+async function autoCheckWinners(evt, groupComplete) {
+    if (autoCheckTriggered) return;
+    if (!groupComplete) return;
+    if (evt.status !== 'active') return;
+    if ((evt.phase || 'group') !== 'group') return;
+    if (evt.winners && evt.winners.length > 0) return;
+
+    autoCheckTriggered = true;
+    try {
+        await fetch(`/api/event/${EVENT_ID}/check-winners`, { method: 'POST' });
+    } catch (e) {}
+}
+
 // ==================== POLL ====================
 
 async function poll() {
@@ -1122,25 +1423,37 @@ async function poll() {
         const statusLabels = { setup: 'Opsætning', active: 'I gang', finished: 'Afsluttet' };
         document.getElementById('event-subtitle').textContent = `${statusLabels[evt.status]} — ${evt.teams.length} hold`;
 
-        // Festive mode toggle
-        const festive = evt.festive_mode !== false;  // default true
-        const particlesEl = document.getElementById('particles');
-        if (particlesEl) particlesEl.style.display = festive ? '' : 'none';
-        // Remove any active banner if festive off
-        if (!festive) {
+        // Festive mode — level 0-5 (backwards compat: true=5, false=0)
+        let festiveLevel = evt.festive_mode;
+        if (festiveLevel === true) festiveLevel = 5;
+        else if (festiveLevel === false || festiveLevel === undefined) festiveLevel = 0;
+        else festiveLevel = Math.max(0, Math.min(5, parseInt(festiveLevel) || 0));
+        applyFestiveLevel(festiveLevel);
+        const festive = festiveLevel > 0;
+        // Remove any active banner if banners disabled (level < 5)
+        if (festiveLevel < 5) {
             const banner = document.querySelector('.top3-banner-overlay');
             if (banner) banner.remove();
         }
 
-        if (festive) checkTop3Changes(data.standings, evt);
-        renderFlow(evt);
-        renderTop3(data.standings, evt);
-        renderScreenStandings(data.standings, evt);
-        renderProgress(evt);
+        // Auto-trigger check-winners when all matches are played
+        await autoCheckWinners(evt, data.group_complete);
 
-        if (columnModes.standings === 'loop') {
-            ensureLoopDuplicated(lastStandingsHtml);
+        // Check if finished — show podium
+        const isFinished = renderFinishedView(evt, data.standings);
+
+        if (!isFinished) {
+            if (festiveLevel >= 5) checkTop3Changes(data.standings, evt);
+            renderFlow(evt);
+            renderTop3(data.standings, evt);
+            renderScreenStandings(data.standings, evt);
+
+            if (columnModes.standings === 'loop') {
+                ensureLoopDuplicated(lastStandingsHtml);
+            }
         }
+
+        renderProgress(evt);
 
         // Screen message overlay
         const overlay = document.getElementById('screen-message-overlay');

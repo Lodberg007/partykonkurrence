@@ -396,20 +396,6 @@
         }
         .rule-card-text::-webkit-scrollbar { width: 3px; }
         .rule-card-text::-webkit-scrollbar-thumb { background: var(--card-border); }
-        .rule-qr-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255,255,255,0.05);
-        }
-        .rule-qr-row canvas { border-radius: 4px; }
-        .rule-qr-label {
-            font-size: 10px;
-            color: var(--text-dim);
-            line-height: 1.3;
-        }
     </style>
 </head>
 <body>
@@ -439,7 +425,6 @@
     <div class="branding">Hosted by Lejpartytelt.dk</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 <script>
 const EVENT_ID = "{{ event.id }}";
 const BASE_URL = window.location.origin;
@@ -557,24 +542,41 @@ function render(evt, standings) {
 
         for (const m of active) {
             const label = m.resource_label || '';
-            html += `<div class="match active">
-                <div class="match-label now">Spilles nu</div>
-                ${label ? `<div class="match-resource">${escapeHtml(label)}</div>` : ''}
-                <div class="match-teams">
-                    <div class="team">${escapeHtml(teamName(evt.teams, m.team_a_id))}</div>
-                    <div class="vs">VS</div>
-                    <div class="team">${escapeHtml(teamName(evt.teams, m.team_b_id))}</div>
-                </div>
-                <div class="score-row">
-                    <input type="number" min="0" class="score-box" id="ra-${m.id}" placeholder="0">
-                    <span class="score-sep">&mdash;</span>
-                    <input type="number" min="0" class="score-box" id="rb-${m.id}" placeholder="0">
-                </div>
-                <div class="btn-row">
-                    <button class="btn btn-gold" onclick="saveResult('${comp.id}','${m.id}')">Gem</button>
-                    <button class="btn btn-ghost btn-sm" onclick="postpone('${comp.id}','${m.id}')">Udskyd</button>
-                </div>
-            </div>`;
+            const aName = teamName(evt.teams, m.team_a_id);
+            const bName = teamName(evt.teams, m.team_b_id);
+            if (comp.winner_only) {
+                html += `<div class="match active">
+                    <div class="match-label now">Spilles nu</div>
+                    ${label ? `<div class="match-resource">${escapeHtml(label)}</div>` : ''}
+                    <div style="text-align:center;font-size:12px;color:var(--text-dim);margin-bottom:6px;">Tryk på vinderen:</div>
+                    <div class="btn-row">
+                        <button class="btn btn-gold" style="font-size:15px;padding:12px;" onclick="saveWinnerOnly('${comp.id}','${m.id}',true)">${escapeHtml(aName)} 👑</button>
+                        <button class="btn btn-gold" style="font-size:15px;padding:12px;" onclick="saveWinnerOnly('${comp.id}','${m.id}',false)">${escapeHtml(bName)} 👑</button>
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn btn-ghost btn-sm" onclick="postpone('${comp.id}','${m.id}')">Udskyd</button>
+                    </div>
+                </div>`;
+            } else {
+                html += `<div class="match active">
+                    <div class="match-label now">Spilles nu</div>
+                    ${label ? `<div class="match-resource">${escapeHtml(label)}</div>` : ''}
+                    <div class="match-teams">
+                        <div class="team">${escapeHtml(aName)}</div>
+                        <div class="vs">VS</div>
+                        <div class="team">${escapeHtml(bName)}</div>
+                    </div>
+                    <div class="score-row">
+                        <input type="number" min="0" class="score-box" id="ra-${m.id}" placeholder="0">
+                        <span class="score-sep">&mdash;</span>
+                        <input type="number" min="0" class="score-box" id="rb-${m.id}" placeholder="0">
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn btn-gold" onclick="saveResult('${comp.id}','${m.id}')">Gem</button>
+                        <button class="btn btn-ghost btn-sm" onclick="postpone('${comp.id}','${m.id}')">Udskyd</button>
+                    </div>
+                </div>`;
+            }
         }
 
         if (waiting.length > 0) {
@@ -593,14 +595,29 @@ function render(evt, standings) {
 
         if (played.length > 0) {
             const m = played[played.length - 1];
-            html += `<div class="match played">
-                <div class="match-label done">Sidst</div>
-                <div class="match-teams">
-                    <div class="team">${escapeHtml(teamName(evt.teams, m.team_a_id))}</div>
-                    <div class="score-display">${m.score_a}&ndash;${m.score_b}</div>
-                    <div class="team">${escapeHtml(teamName(evt.teams, m.team_b_id))}</div>
-                </div>
-            </div>`;
+            const aName = teamName(evt.teams, m.team_a_id);
+            const bName = teamName(evt.teams, m.team_b_id);
+            if (comp.winner_only) {
+                const winnerName = m.score_a > m.score_b ? aName : bName;
+                html += `<div class="match played">
+                    <div class="match-label done">Sidst</div>
+                    <div class="match-teams">
+                        <div class="team">${escapeHtml(aName)}</div>
+                        <div class="vs">vs</div>
+                        <div class="team">${escapeHtml(bName)}</div>
+                    </div>
+                    <div style="text-align:center;font-size:13px;color:var(--green);font-weight:700;">🏆 ${escapeHtml(winnerName)}</div>
+                </div>`;
+            } else {
+                html += `<div class="match played">
+                    <div class="match-label done">Sidst</div>
+                    <div class="match-teams">
+                        <div class="team">${escapeHtml(aName)}</div>
+                        <div class="score-display">${m.score_a}&ndash;${m.score_b}</div>
+                        <div class="team">${escapeHtml(bName)}</div>
+                    </div>
+                </div>`;
+            }
         }
 
         if (played.length === total && total > 0) {
@@ -728,14 +745,13 @@ function render(evt, standings) {
 function renderRulesQR(evt) {
     const bar = document.getElementById('rules-qr-bar');
     const compsWithRules = evt.competitions.filter(c => c.rules && c.rules.trim());
-    if (compsWithRules.length === 0 && evt.teams.length === 0) {
+    if (compsWithRules.length === 0) {
         bar.style.display = 'none';
         return;
     }
     bar.style.display = 'flex';
     let html = '';
 
-    // Regler per konkurrence
     for (const comp of compsWithRules) {
         html += `<div class="rule-card">
             <div class="rule-card-title">📋 ${escapeHtml(comp.name)}</div>
@@ -743,33 +759,7 @@ function renderRulesQR(evt) {
         </div>`;
     }
 
-    // QR-koder til holdenes sider
-    if (evt.teams.length > 0) {
-        html += `<div class="rule-card" style="min-width:200px;">
-            <div class="rule-card-title">📱 Hold QR-koder</div>
-            <div id="qr-codes-container" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;"></div>
-        </div>`;
-    }
-
     bar.innerHTML = html;
-
-    // Generer QR-koder
-    if (evt.teams.length > 0 && typeof QRCode !== 'undefined') {
-        const container = document.getElementById('qr-codes-container');
-        for (const team of evt.teams) {
-            const wrap = document.createElement('div');
-            wrap.style.cssText = 'text-align:center;';
-            const canvas = document.createElement('canvas');
-            const label = document.createElement('div');
-            label.style.cssText = 'font-size:9px;color:var(--text-dim);margin-top:2px;';
-            label.textContent = team.name;
-            wrap.appendChild(canvas);
-            wrap.appendChild(label);
-            container.appendChild(wrap);
-            const url = `${BASE_URL}/event/${EVENT_ID}/hold/${team.code}`;
-            QRCode.toCanvas(canvas, url, { width: 80, margin: 1, color: { dark: '#f0ead6', light: '#1a1a35' } });
-        }
-    }
 }
 
 async function saveResult(compId, matchId) {
@@ -784,6 +774,21 @@ async function saveResult(compId, matchId) {
         });
         const data = await res.json();
         if (data.success) { spawnConfetti(); showToast('Resultat gemt!'); if (document.activeElement) document.activeElement.blur(); poll(); }
+        else showToast(data.error, true);
+    } catch (e) { showToast('Netvaerksfejl', true); }
+}
+
+async function saveWinnerOnly(compId, matchId, teamAWins) {
+    const scoreA = teamAWins ? 1 : 0;
+    const scoreB = teamAWins ? 0 : 1;
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/result`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comp_id: compId, match_id: matchId, score_a: scoreA, score_b: scoreB })
+        });
+        const data = await res.json();
+        if (data.success) { spawnConfetti(); showToast('Vinder registreret!'); poll(); }
         else showToast(data.error, true);
     } catch (e) { showToast('Netvaerksfejl', true); }
 }
@@ -866,6 +871,8 @@ async function savePoints(compId, teamId) {
     } catch (e) { showToast('Netvaerksfejl', true); }
 }
 
+let autoCheckTriggered = false;
+
 async function poll() {
     // Skip re-render if user is typing in an input
     if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) {
@@ -874,7 +881,22 @@ async function poll() {
     try {
         const res = await fetch(`/api/event/${EVENT_ID}/standings`);
         const data = await res.json();
-        if (data.success) render(data.event, data.standings);
+        if (data.success) {
+            // Auto-trigger check-winners when all group matches are played
+            const evt = data.event;
+            if (!autoCheckTriggered && data.group_complete && evt.status === 'active' &&
+                (evt.phase || 'group') === 'group' && (!evt.winners || evt.winners.length === 0)) {
+                autoCheckTriggered = true;
+                try {
+                    await fetch(`/api/event/${EVENT_ID}/check-winners`, { method: 'POST' });
+                    // Re-fetch after triggering
+                    const res2 = await fetch(`/api/event/${EVENT_ID}/standings`);
+                    const data2 = await res2.json();
+                    if (data2.success) { render(data2.event, data2.standings); return; }
+                } catch (e2) {}
+            }
+            render(evt, data.standings);
+        }
     } catch (e) {}
 }
 

@@ -349,7 +349,7 @@ function render(evt, standings) {
         if (comp.type !== 'round-robin') continue;
         for (const m of comp.matches) {
             if (m.team_a_id !== TEAM_ID && m.team_b_id !== TEAM_ID) continue;
-            const entry = { ...m, compName: comp.name, compId: comp.id };
+            const entry = { ...m, compName: comp.name, compId: comp.id, winnerOnly: !!comp.winner_only };
             if (m.status === 'active') activeMatches.push(entry);
             else if (m.status === 'waiting') waitingMatches.push(entry);
             else if (m.status === 'played') playedList.push(entry);
@@ -390,24 +390,44 @@ function render(evt, standings) {
             const isA = m.team_a_id === TEAM_ID;
             const oppId = isA ? m.team_b_id : m.team_a_id;
             const oppName = displayName(evt.teams, oppId);
-            html += `<div class="match-card active">
-                <div class="match-card-header">
-                    <span class="match-comp-name">${escapeHtml(m.compName)}</span>
-                    <span class="match-resource">${escapeHtml(m.resource_label || '')}</span>
-                    <span class="match-status-tag now">Nu</span>
-                </div>
-                <div class="match-teams-row">
-                    <span class="match-team-name left me">${escapeHtml(displayName(evt.teams, TEAM_ID))}</span>
-                    <span class="match-vs">vs</span>
-                    <span class="match-team-name right">${escapeHtml(oppName)}</span>
-                </div>
-                <div class="score-input-row">
-                    <input type="number" min="0" class="score-input" id="sa-${m.id}" placeholder="0">
-                    <span class="score-sep">—</span>
-                    <input type="number" min="0" class="score-input" id="sb-${m.id}" placeholder="0">
-                </div>
-                <button class="btn-save" onclick="saveResult('${m.compId}','${m.id}',${isA})">Gem resultat</button>
-            </div>`;
+            if (m.winnerOnly) {
+                html += `<div class="match-card active">
+                    <div class="match-card-header">
+                        <span class="match-comp-name">${escapeHtml(m.compName)}</span>
+                        <span class="match-resource">${escapeHtml(m.resource_label || '')}</span>
+                        <span class="match-status-tag now">Nu</span>
+                    </div>
+                    <div class="match-teams-row">
+                        <span class="match-team-name left me">${escapeHtml(displayName(evt.teams, TEAM_ID))}</span>
+                        <span class="match-vs">vs</span>
+                        <span class="match-team-name right">${escapeHtml(oppName)}</span>
+                    </div>
+                    <div style="text-align:center;font-size:13px;color:var(--text-dim);margin:4px 0;">Tryk på vinderen:</div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn-save" style="flex:1;" onclick="saveWinnerOnly('${m.compId}','${m.id}',${isA})">${escapeHtml(displayName(evt.teams, TEAM_ID))} 👑</button>
+                        <button class="btn-save" style="flex:1;background:var(--blue);" onclick="saveWinnerOnly('${m.compId}','${m.id}',${!isA})">${escapeHtml(oppName)} 👑</button>
+                    </div>
+                </div>`;
+            } else {
+                html += `<div class="match-card active">
+                    <div class="match-card-header">
+                        <span class="match-comp-name">${escapeHtml(m.compName)}</span>
+                        <span class="match-resource">${escapeHtml(m.resource_label || '')}</span>
+                        <span class="match-status-tag now">Nu</span>
+                    </div>
+                    <div class="match-teams-row">
+                        <span class="match-team-name left me">${escapeHtml(displayName(evt.teams, TEAM_ID))}</span>
+                        <span class="match-vs">vs</span>
+                        <span class="match-team-name right">${escapeHtml(oppName)}</span>
+                    </div>
+                    <div class="score-input-row">
+                        <input type="number" min="0" class="score-input" id="sa-${m.id}" placeholder="0">
+                        <span class="score-sep">—</span>
+                        <input type="number" min="0" class="score-input" id="sb-${m.id}" placeholder="0">
+                    </div>
+                    <button class="btn-save" onclick="saveResult('${m.compId}','${m.id}',${isA})">Gem resultat</button>
+                </div>`;
+            }
         }
     }
 
@@ -448,18 +468,33 @@ function render(evt, standings) {
             let resultClass = 'draw', resultText = 'Uafgjort';
             if (myScore > theirScore) { resultClass = 'win'; resultText = 'Vundet'; }
             else if (myScore < theirScore) { resultClass = 'loss'; resultText = 'Tabt'; }
-            html += `<div class="match-card played">
-                <div class="match-card-header">
-                    <span class="match-comp-name">${escapeHtml(m.compName)}</span>
-                    <span class="match-status-tag done">Spillet</span>
-                </div>
-                <div class="match-teams-row">
-                    <span class="match-team-name left me">${escapeHtml(displayName(evt.teams, TEAM_ID))}</span>
-                    <span class="match-score-display">${myScore} — ${theirScore}</span>
-                    <span class="match-team-name right">${escapeHtml(oppName)}</span>
-                </div>
-                <div class="match-result-tag ${resultClass}">${resultText}</div>
-            </div>`;
+            if (m.winnerOnly) {
+                html += `<div class="match-card played">
+                    <div class="match-card-header">
+                        <span class="match-comp-name">${escapeHtml(m.compName)}</span>
+                        <span class="match-status-tag done">Spillet</span>
+                    </div>
+                    <div class="match-teams-row">
+                        <span class="match-team-name left me">${escapeHtml(displayName(evt.teams, TEAM_ID))}</span>
+                        <span class="match-vs">vs</span>
+                        <span class="match-team-name right">${escapeHtml(oppName)}</span>
+                    </div>
+                    <div class="match-result-tag ${resultClass}">${resultClass === 'win' ? '🏆 ' : ''}${resultText}</div>
+                </div>`;
+            } else {
+                html += `<div class="match-card played">
+                    <div class="match-card-header">
+                        <span class="match-comp-name">${escapeHtml(m.compName)}</span>
+                        <span class="match-status-tag done">Spillet</span>
+                    </div>
+                    <div class="match-teams-row">
+                        <span class="match-team-name left me">${escapeHtml(displayName(evt.teams, TEAM_ID))}</span>
+                        <span class="match-score-display">${myScore} — ${theirScore}</span>
+                        <span class="match-team-name right">${escapeHtml(oppName)}</span>
+                    </div>
+                    <div class="match-result-tag ${resultClass}">${resultText}</div>
+                </div>`;
+            }
         }
     }
 
@@ -509,6 +544,21 @@ function render(evt, standings) {
             rulesContainer.innerHTML = '';
         }
     }
+}
+
+async function saveWinnerOnly(compId, matchId, teamAWins) {
+    const scoreA = teamAWins ? 1 : 0;
+    const scoreB = teamAWins ? 0 : 1;
+    try {
+        const res = await fetch(`/api/event/${EVENT_ID}/result`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comp_id: compId, match_id: matchId, score_a: scoreA, score_b: scoreB })
+        });
+        const data = await res.json();
+        if (data.success) { showToast('Vinder registreret!'); if (document.activeElement) document.activeElement.blur(); poll(); }
+        else showToast(data.error, true);
+    } catch (e) { showToast('Netværksfejl', true); }
 }
 
 async function saveResult(compId, matchId, isTeamA) {
